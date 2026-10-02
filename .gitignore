@@ -1,0 +1,14 @@
+node_modules
+dist
+storybook-static
+coverage
+*.log
+.DS_Store
+.vite
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+.pnp.*
