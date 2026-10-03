@@ -2,6 +2,13 @@ import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import dts from 'vite-plugin-dts';
+import pkg from './package.json' with { type: 'json' };
+
+// Every peer dependency stays external, including subpath imports (`react/jsx-runtime`,
+// `@mui/material/styles`) — a plain string only matches the bare specifier and would bundle them.
+const external = Object.keys(pkg.peerDependencies).map(
+  (name) => new RegExp(`^${name.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&')}(/|$)`),
+);
 
 export default defineConfig({
   plugins: [
@@ -14,6 +21,7 @@ export default defineConfig({
         'src/**/*.test.tsx',
         'src/**/*.stories.ts',
         'src/**/*.stories.tsx',
+        'src/stories',
         'src/test',
       ],
       bundleTypes: true,
@@ -37,16 +45,7 @@ export default defineConfig({
     },
     sourcemap: true,
     rolldownOptions: {
-      external: [
-        'react',
-        'react-dom',
-        'react/jsx-runtime',
-        '@mui/material',
-        '@mui/system',
-        '@mui/x-data-grid',
-        '@emotion/react',
-        '@emotion/styled',
-      ],
+      external,
     },
   },
   test: {
