@@ -1,3 +1,4 @@
+import useColumnOrderContext from '@hooks/use-column-order-context';
 import usePinningContext from '@hooks/use-pinning-context';
 import {
   GRID_ROOT_GROUP_ID,
@@ -8,8 +9,9 @@ import {
   type GridTreeNode,
   type GridValidRowModel,
 } from '@mui/x-data-grid';
-// The only internals in the library live in this file and `pinned-rows.tsx`: they are the hooks
-// DataGridPro uses for the same features. The x-data-grid peer range is pinned to the tested minor.
+// Internals are quarantined to this file and `pinned-rows.tsx` (plus `vars` in the columns panel):
+// they are the hooks DataGridPro uses for the same features. The x-data-grid peer range is pinned
+// to the tested minor.
 import {
   useGridPrivateApiContext,
   useGridRegisterPipeProcessor,
@@ -36,17 +38,19 @@ const toCache = ({ top, bottom }: { top: GridRowEntry[]; bottom: GridRowEntry[] 
  * Renders nothing. Mounted once inside the grid (by the top pinned-rows slot) to:
  * - mirror the pinned-columns model into grid state, where headers, cells, borders and scroll
  *   shadows already read it;
- * - reorder columns so pinned ones sit at the edges, which the virtualizer requires;
+ * - reorder columns so pinned ones sit at the edges, which the virtualizer requires, and the rest
+ *   follow the user's column order;
  * - inject pinned rows into the row tree, which sizes the sticky top/bottom containers and
  *   feeds keyboard navigation, export and `aria-rowcount`.
  */
 const PinningSync = () => {
   const apiRef = useGridPrivateApiContext();
-  const { pinnedColumns, declaredFieldOrder, pinnedRows } = usePinningContext();
+  const { pinnedColumns, pinnedRows } = usePinningContext();
+  const { fieldOrder } = useColumnOrderContext();
 
   // Processors read the latest values through refs so they are registered exactly once.
   const pinnedColumnsRef = useRef<GridPinnedColumnFields>(pinnedColumns);
-  const fieldOrderRef = useRef(declaredFieldOrder);
+  const fieldOrderRef = useRef(fieldOrder);
   const pinnedRowsCacheRef = useRef<PinnedRowsCache>(toCache(pinnedRows));
   const injectedRowIdsRef = useRef<GridRowId[]>([]);
 
@@ -56,7 +60,7 @@ const PinningSync = () => {
     const right = (pinnedColumnsRef.current.right ?? []).filter(
       (field) => field in lookup && !left.includes(field),
     );
-    // Rank by declared order so an unpinned column returns to its place. Generated columns
+    // Rank by the user's order so an unpinned column returns to its place. Generated columns
     // (checkbox) are not declared and keep their leading position.
     const rank = new Map(fieldOrderRef.current.map((field, index) => [field, index]));
     const pinned = new Set([...left, ...right]);
@@ -147,10 +151,10 @@ const PinningSync = () => {
   // Layout effects so the first paint already shows pinned columns and rows.
   useLayoutEffect(() => {
     pinnedColumnsRef.current = pinnedColumns;
-    fieldOrderRef.current = declaredFieldOrder;
+    fieldOrderRef.current = fieldOrder;
     apiRef.current.setState((state) => ({ ...state, pinnedColumns }));
     apiRef.current.requestPipeProcessorsApplication('hydrateColumns');
-  }, [apiRef, pinnedColumns, declaredFieldOrder]);
+  }, [apiRef, pinnedColumns, fieldOrder]);
 
   useLayoutEffect(() => {
     const cache = toCache(pinnedRows);

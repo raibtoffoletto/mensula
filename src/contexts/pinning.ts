@@ -20,8 +20,6 @@ export type ColumnPinningApi = {
 
 export type PinningContextValue = ColumnPinningApi & {
   disableColumnPinning: boolean;
-  /** Field order as declared by the consumer; unpinned columns return to it. */
-  declaredFieldOrder: readonly string[];
   pinnedRows: { top: GridRowEntry[]; bottom: GridRowEntry[] };
 };
 

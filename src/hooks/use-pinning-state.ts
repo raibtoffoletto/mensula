@@ -34,7 +34,6 @@ type PinningStateOptions = Pick<
   'pinnedColumns' | 'onPinnedColumnsChange' | 'disableColumnPinning' | 'pinnedRows'
 > & {
   initialPinnedColumns?: GridPinnedColumnFields;
-  columns: DataGridProps['columns'];
   getRowId?: DataGridProps['getRowId'];
 };
 
@@ -53,7 +52,6 @@ const usePinningState = ({
   disableColumnPinning = false,
   pinnedRows: pinnedRowsProp,
   initialPinnedColumns,
-  columns,
   getRowId,
 }: PinningStateOptions): PinningContextValue => {
   const [uncontrolled, setUncontrolled] = useState<GridPinnedColumnFields>(
@@ -108,8 +106,6 @@ const usePinningState = ({
     [isColumnPinned, pinnedColumns, setPinnedColumns],
   );
 
-  const declaredFieldOrder = useMemo(() => columns.map((column) => column.field), [columns]);
-
   const pinnedRows = useMemo(
     () => ({
       top: toEntries(pinnedRowsProp?.top, getRowId),
@@ -126,7 +122,6 @@ const usePinningState = ({
       unpinColumn,
       isColumnPinned,
       disableColumnPinning,
-      declaredFieldOrder,
       pinnedRows,
     }),
     [
@@ -136,7 +131,6 @@ const usePinningState = ({
       unpinColumn,
       isColumnPinned,
       disableColumnPinning,
-      declaredFieldOrder,
       pinnedRows,
     ],
   );

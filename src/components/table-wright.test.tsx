@@ -1,10 +1,20 @@
 import useColumnPinning from '@hooks/use-column-pinning';
+import useColumnReorder from '@hooks/use-column-reorder';
 import useDetailPanel from '@hooks/use-detail-panel';
 import { GRID_DETAIL_PANEL_TOGGLE_COL_DEF } from '@lib/detail-panel';
+import { DRAG_PREVIEW_CLASS } from '@lib/drag-preview';
 import type { GridRowId, GridRowParams } from '@mui/x-data-grid';
-import { render, screen, within } from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  render,
+  renderHook,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import TableWright from './table-wright';
 
 const columns = [
@@ -17,6 +27,11 @@ const rows = [
 ];
 
 const getDetailPanelContent = ({ row }: GridRowParams) => <p>Details of {row.name}</p>;
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
 
 describe('TableWright', () => {
   it('renders rows and column headers', () => {
@@ -187,6 +202,94 @@ describe('TableWright master-detail', () => {
 
     expect(screen.queryByText('Close 1')).not.toBeInTheDocument();
   });
+
+  it("measures 'auto' panels once when ResizeObserver is unavailable", async () => {
+    const user = userEvent.setup();
+    vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(80);
+    render(
+      <TableWright
+        rows={rows}
+        columns={columns}
+        getDetailPanelContent={getDetailPanelContent}
+        getDetailPanelHeight={() => 'auto'}
+      />,
+    );
+
+    await user.click(screen.getAllByRole('button', { name: 'Expand' })[0]!);
+
+    expect(screen.getByText('Ada').closest('[role="row"]')).toHaveStyle({ marginBottom: '80px' });
+    expect(screen.getByText('Details of Ada').closest('.MuiDataGrid-detailPanel')).toHaveStyle({
+      height: 'auto',
+    });
+  });
+
+  it("follows the content height of 'auto' panels as it resizes", async () => {
+    const user = userEvent.setup();
+    let contentHeight = 80;
+    const observers: { callback: () => void; disconnect: () => void }[] = [];
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        disconnect = vi.fn();
+        constructor(public callback: () => void) {
+          observers.push(this);
+        }
+        observe() {}
+        unobserve() {}
+      },
+    );
+    vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockImplementation(() => contentHeight);
+    render(
+      <TableWright
+        rows={rows}
+        columns={columns}
+        getDetailPanelContent={getDetailPanelContent}
+        getDetailPanelHeight={() => 'auto'}
+      />,
+    );
+    const adaRow = () => screen.getByText('Ada').closest('[role="row"]');
+
+    await user.click(screen.getAllByRole('button', { name: 'Expand' })[0]!);
+    expect(adaRow()).toHaveStyle({ marginBottom: '80px' });
+
+    contentHeight = 140;
+    act(() => observers.at(-1)!.callback());
+    expect(adaRow()).toHaveStyle({ marginBottom: '140px' });
+
+    await user.click(screen.getByRole('button', { name: 'Collapse' }));
+    expect(observers.at(-1)!.disconnect).toHaveBeenCalled();
+    expect(adaRow()).not.toHaveStyle({ marginBottom: '140px' });
+  });
+
+  it('ignores toggling rows without content or that do not exist', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    const Toggles = () => {
+      const { toggleDetailPanel, hasDetailPanel } = useDetailPanel();
+      return (
+        <>
+          <button onClick={() => toggleDetailPanel(2)}>Toggle 2</button>
+          <button onClick={() => toggleDetailPanel(99)}>Toggle 99</button>
+          <span>{hasDetailPanel(99) ? 'has 99' : 'no 99'}</span>
+        </>
+      );
+    };
+    render(
+      <TableWright
+        rows={rows}
+        columns={columns}
+        getDetailPanelContent={({ row }) => (row.id === 1 ? <Toggles /> : null)}
+        initialState={{ detailPanel: { expandedRowIds: new Set([1]) } }}
+        onDetailPanelExpandedRowIdsChange={onChange}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Toggle 2' }));
+    await user.click(screen.getByRole('button', { name: 'Toggle 99' }));
+
+    expect(onChange).not.toHaveBeenCalled();
+    expect(screen.getByText('no 99')).toBeInTheDocument();
+  });
 });
 
 describe('TableWright column pinning', () => {
@@ -308,6 +411,49 @@ describe('TableWright column pinning', () => {
     expect(screen.getByRole('button', { name: 'Role right' })).toBeInTheDocument();
     expect(headerFields().at(-1)).toBe('role');
   });
+
+  it('pins to the right, and moves a column across sides, from the column menu', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(<TableWright rows={people} columns={peopleColumns} onPinnedColumnsChange={onChange} />);
+    const menuItems = () => screen.getAllByRole('menuitem').map((item) => item.textContent);
+
+    await user.click(within(header('ID')).getByLabelText('ID column menu'));
+    await user.click(screen.getByRole('menuitem', { name: 'Pin to right' }));
+    expect(onChange).toHaveBeenLastCalledWith({ left: [], right: ['id'] });
+    expect(headerFields()).toEqual(['name', 'role', 'city', 'id']);
+
+    await user.click(within(header('ID')).getByLabelText('ID column menu'));
+    expect(menuItems()).toEqual(expect.arrayContaining(['Pin to left', 'Unpin']));
+    expect(menuItems()).not.toContain('Pin to right');
+    await user.click(screen.getByRole('menuitem', { name: 'Pin to left' }));
+
+    expect(onChange).toHaveBeenLastCalledWith({ left: ['id'], right: [] });
+    expect(headerFields()).toEqual(['id', 'name', 'role', 'city']);
+  });
+
+  it('ignores pinning a column to the side it is already on', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    const PinAgain = () => {
+      const { pinColumn } = useColumnPinning();
+      return <button onClick={() => pinColumn('role', 'left')}>Pin role left</button>;
+    };
+    render(
+      <TableWright
+        rows={people}
+        columns={peopleColumns.map((column) =>
+          column.field === 'city' ? { ...column, renderHeader: () => <PinAgain /> } : column,
+        )}
+        initialState={{ pinnedColumns: { left: ['role'] } }}
+        onPinnedColumnsChange={onChange}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Pin role left' }));
+
+    expect(onChange).not.toHaveBeenCalled();
+  });
 });
 
 describe('TableWright row pinning', () => {
@@ -393,5 +539,356 @@ describe('TableWright row pinning', () => {
 
     expect(within(section('top')).queryByRole('button')).not.toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: 'Expand' })).toHaveLength(3);
+  });
+});
+
+describe('TableWright column reordering', () => {
+  const people = [{ id: 1, name: 'Ada', role: 'Engineer', city: 'London' }];
+  const peopleColumns = [
+    { field: 'id', headerName: 'ID' },
+    { field: 'name', headerName: 'Name' },
+    { field: 'role', headerName: 'Role' },
+    { field: 'city', headerName: 'City' },
+  ];
+  const headerFields = () =>
+    screen.getAllByRole('columnheader').map((header) => header.getAttribute('data-field'));
+  const header = (name: string) => screen.getByRole('columnheader', { name });
+
+  // jsdom has no layout: point `elementFromPoint` at the header the drag should be over.
+  const dragHeader = (
+    from: string,
+    over: string[],
+    direction: 1 | -1 = 1,
+    beforeRelease?: () => void,
+  ) => {
+    const elementFromPoint = vi.fn();
+    document.elementFromPoint = elementFromPoint;
+    fireEvent.pointerDown(header(from), { button: 0, pointerId: 1, pointerType: 'mouse' });
+    over.forEach((name, step) => {
+      elementFromPoint.mockReturnValue(header(name));
+      fireEvent.pointerMove(window, { pointerId: 1, clientX: direction * 20 * (step + 1) });
+    });
+    beforeRelease?.();
+    fireEvent.pointerUp(window, { pointerId: 1 });
+  };
+
+  afterEach(() => {
+    // @ts-expect-error -- jsdom does not implement it; tests install a mock.
+    delete document.elementFromPoint;
+  });
+
+  it('moves a column by dragging its header, and fires onColumnOrderChange on drop', () => {
+    const onColumnOrderChange = vi.fn();
+    render(
+      <TableWright
+        rows={people}
+        columns={peopleColumns}
+        onColumnOrderChange={onColumnOrderChange}
+      />,
+    );
+
+    dragHeader('ID', ['Name', 'Role']);
+
+    expect(headerFields()).toEqual(['name', 'role', 'id', 'city']);
+    expect(onColumnOrderChange).toHaveBeenCalledTimes(1);
+    expect(onColumnOrderChange.mock.calls[0]![0]).toMatchObject({
+      column: expect.objectContaining({ field: 'id' }),
+      oldIndex: 0,
+      targetIndex: 2,
+    });
+  });
+
+  it('floats a copy of the header under a grabbing cursor while dragging', async () => {
+    render(<TableWright rows={people} columns={peopleColumns} />);
+    const preview = () => document.querySelector<HTMLElement>(`.${DRAG_PREVIEW_CLASS}`);
+    const grabbing = () =>
+      [...document.head.querySelectorAll('style')].some((style) =>
+        style.textContent?.includes('cursor: grabbing'),
+      );
+
+    dragHeader('ID', ['Name'], 1, () => {
+      expect(preview()).toHaveAttribute('aria-hidden', 'true');
+      expect(preview()).toHaveTextContent('ID');
+      expect(preview()!.style.transform).toBe('translate(20px, 0px)');
+      expect(header('ID').style.opacity).toBe('0.4');
+      expect(grabbing()).toBe(true);
+    });
+
+    expect(grabbing()).toBe(false);
+    await waitFor(() => expect(preview()).not.toBeInTheDocument());
+    expect(header('ID').style.opacity).toBe('');
+    // The copy is not a second header.
+    expect(screen.getAllByRole('columnheader')).toHaveLength(4);
+  });
+
+  it('only moves toward the direction the pointer travels', () => {
+    render(<TableWright rows={people} columns={peopleColumns} />);
+
+    // Still over Name, but moving left: no swap back.
+    dragHeader('ID', ['Name']);
+    expect(headerFields()).toEqual(['name', 'id', 'role', 'city']);
+    dragHeader('ID', ['Role'], -1);
+    expect(headerFields()).toEqual(['name', 'id', 'role', 'city']);
+  });
+
+  it('does not sort when a header drag ends on it', () => {
+    render(<TableWright rows={people} columns={peopleColumns} />);
+
+    const idHeader = header('ID');
+    dragHeader('ID', ['Name']);
+    fireEvent.click(idHeader);
+    expect(idHeader).toHaveAttribute('aria-sort', 'none');
+
+    fireEvent.click(idHeader);
+    expect(idHeader).toHaveAttribute('aria-sort', 'ascending');
+  });
+
+  it('keeps columns within their pinned section', () => {
+    const onPinnedColumnsChange = vi.fn();
+    render(
+      <TableWright
+        rows={people}
+        columns={peopleColumns}
+        initialState={{ pinnedColumns: { left: ['name', 'role'] } }}
+        onPinnedColumnsChange={onPinnedColumnsChange}
+      />,
+    );
+    expect(headerFields()).toEqual(['name', 'role', 'id', 'city']);
+
+    dragHeader('ID', ['Role'], -1);
+    expect(headerFields()).toEqual(['name', 'role', 'id', 'city']);
+
+    dragHeader('Name', ['Role']);
+    expect(headerFields()).toEqual(['role', 'name', 'id', 'city']);
+    expect(onPinnedColumnsChange).toHaveBeenLastCalledWith({ left: ['role', 'name'] });
+  });
+
+  it('honors disableColumnReorder', () => {
+    render(<TableWright rows={people} columns={peopleColumns} disableColumnReorder />);
+    dragHeader('ID', ['Name']);
+    expect(headerFields()).toEqual(['id', 'name', 'role', 'city']);
+  });
+
+  it('never drags a disableReorder column, and only displaces it toward a movable one', () => {
+    const fixed = new Set(['id', 'name']);
+    render(
+      <TableWright
+        rows={people}
+        columns={peopleColumns.map((column) => ({
+          ...column,
+          disableReorder: fixed.has(column.field),
+        }))}
+      />,
+    );
+
+    dragHeader('Name', ['Role']);
+    expect(headerFields()).toEqual(['id', 'name', 'role', 'city']);
+
+    // Beyond Name is ID, also fixed: City cannot get between them.
+    dragHeader('City', ['Role', 'Name'], -1);
+    expect(headerFields()).toEqual(['id', 'name', 'city', 'role']);
+  });
+
+  it('keeps the checkbox column first', () => {
+    render(<TableWright rows={people} columns={peopleColumns} checkboxSelection />);
+
+    dragHeader('ID', ['Select all rows'], -1);
+    expect(headerFields()).toEqual(['__check__', 'id', 'name', 'role', 'city']);
+  });
+
+  it('keeps the order across new columns arrays and pinning changes', () => {
+    const { rerender } = render(<TableWright rows={people} columns={peopleColumns} />);
+    dragHeader('City', ['Role', 'Name'], -1);
+    expect(headerFields()).toEqual(['id', 'city', 'name', 'role']);
+
+    rerender(<TableWright rows={people} columns={[...peopleColumns]} />);
+    expect(headerFields()).toEqual(['id', 'city', 'name', 'role']);
+
+    rerender(
+      <TableWright rows={people} columns={[...peopleColumns]} pinnedColumns={{ left: ['name'] }} />,
+    );
+    expect(headerFields()).toEqual(['name', 'id', 'city', 'role']);
+
+    rerender(<TableWright rows={people} columns={[...peopleColumns]} pinnedColumns={{}} />);
+    expect(headerFields()).toEqual(['id', 'city', 'name', 'role']);
+  });
+
+  it('starts from initialState.columns.orderedFields', () => {
+    render(
+      <TableWright
+        rows={people}
+        columns={peopleColumns}
+        initialState={{ columns: { orderedFields: ['role', 'id', 'name', 'city'] } }}
+      />,
+    );
+
+    expect(headerFields()).toEqual(['role', 'id', 'name', 'city']);
+  });
+
+  it('exposes reordering to custom UI via useColumnReorder', async () => {
+    const user = userEvent.setup();
+    const onColumnOrderChange = vi.fn();
+    const MoveButton = () => {
+      const { moveColumn, hasColumnOrderChanged, resetColumnOrder } = useColumnReorder();
+      return hasColumnOrderChanged ? (
+        <button onClick={resetColumnOrder}>Reset order</button>
+      ) : (
+        <button onClick={() => moveColumn('city', 'id')}>City first</button>
+      );
+    };
+    render(
+      <TableWright
+        rows={people}
+        columns={peopleColumns.map((column) =>
+          column.field === 'role' ? { ...column, renderHeader: () => <MoveButton /> } : column,
+        )}
+        onColumnOrderChange={onColumnOrderChange}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'City first' }));
+
+    expect(headerFields()).toEqual(['city', 'id', 'name', 'role']);
+    expect(onColumnOrderChange.mock.calls[0]![0]).toMatchObject({ oldIndex: 3, targetIndex: 0 });
+
+    await user.click(screen.getByRole('button', { name: 'Reset order' }));
+    expect(headerFields()).toEqual(['id', 'name', 'role', 'city']);
+  });
+
+  // A press on `target`, one move over `over`, then a release.
+  const pressAndDrag = (target: HTMLElement, over: HTMLElement, init: PointerEventInit = {}) => {
+    document.elementFromPoint = vi.fn(() => over);
+    fireEvent.pointerDown(target, { button: 0, pointerId: 1, pointerType: 'mouse', ...init });
+    fireEvent.pointerMove(window, { pointerId: 1, clientX: 20 });
+    fireEvent.pointerUp(window, { pointerId: 1 });
+  };
+
+  it('keeps a press without movement a click, so headers still sort', () => {
+    render(<TableWright rows={people} columns={peopleColumns} />);
+    const idHeader = header('ID');
+
+    fireEvent.pointerDown(idHeader, { button: 0, pointerId: 1, pointerType: 'mouse' });
+    fireEvent.pointerUp(window, { pointerId: 1 });
+    fireEvent.click(idHeader);
+
+    expect(idHeader).toHaveAttribute('aria-sort', 'ascending');
+  });
+
+  it('ignores touch, secondary buttons, and presses on header controls', () => {
+    render(<TableWright rows={people} columns={peopleColumns} />);
+
+    pressAndDrag(header('ID'), header('Name'), { pointerType: 'touch' });
+    pressAndDrag(header('ID'), header('Name'), { button: 2 });
+    pressAndDrag(within(header('ID')).getByLabelText('ID column menu'), header('Name'));
+    pressAndDrag(
+      header('ID').querySelector<HTMLElement>('.MuiDataGrid-columnSeparator')!,
+      header('Name'),
+    );
+
+    expect(headerFields()).toEqual(['id', 'name', 'role', 'city']);
+  });
+
+  it('leaves the headers of a grid nested in a detail panel to that grid', () => {
+    const onColumnOrderChange = vi.fn();
+    // Same fields as the outer grid, so a mix-up would move the outer columns too.
+    const innerColumns = [
+      { field: 'id', headerName: 'Inner ID' },
+      { field: 'name', headerName: 'Inner name' },
+    ];
+    render(
+      <TableWright
+        rows={people}
+        columns={peopleColumns}
+        onColumnOrderChange={onColumnOrderChange}
+        getDetailPanelContent={() => <TableWright rows={people} columns={innerColumns} />}
+        initialState={{ detailPanel: { expandedRowIds: new Set([1]) } }}
+      />,
+    );
+
+    pressAndDrag(header('Inner ID'), header('Inner name'));
+
+    expect(headerFields()).toEqual([
+      '__detail_panel_toggle__',
+      'id',
+      'name',
+      'role',
+      'city',
+      'name',
+      'id',
+    ]);
+    expect(onColumnOrderChange).not.toHaveBeenCalled();
+  });
+
+  it('cleans up the copy and the cursor when unmounted mid-drag', () => {
+    const { unmount } = render(<TableWright rows={people} columns={peopleColumns} />);
+    document.elementFromPoint = vi.fn(() => header('Name'));
+    fireEvent.pointerDown(header('ID'), { button: 0, pointerId: 1, pointerType: 'mouse' });
+    fireEvent.pointerMove(window, { pointerId: 1, clientX: 20 });
+    expect(document.querySelector(`.${DRAG_PREVIEW_CLASS}`)).toBeInTheDocument();
+
+    unmount();
+
+    expect(document.querySelector(`.${DRAG_PREVIEW_CLASS}`)).not.toBeInTheDocument();
+    expect(document.head.innerHTML).not.toContain('cursor: grabbing');
+  });
+
+  it('slots newly declared columns in after their declared neighbor', () => {
+    const { rerender } = render(<TableWright rows={people} columns={peopleColumns} />);
+    dragHeader('City', ['Role', 'Name', 'ID'], -1);
+    expect(headerFields()).toEqual(['city', 'id', 'name', 'role']);
+
+    const country = { field: 'country', headerName: 'Country' };
+    const withCountry = [...peopleColumns.slice(0, 3), country, peopleColumns[3]!];
+    rerender(<TableWright rows={people} columns={withCountry} />);
+    expect(headerFields()).toEqual(['city', 'id', 'name', 'role', 'country']);
+
+    const withCode = [{ field: 'code', headerName: 'Code' }, ...withCountry];
+    rerender(<TableWright rows={people} columns={withCode} />);
+    expect(headerFields()).toEqual(['code', 'city', 'id', 'name', 'role', 'country']);
+
+    rerender(
+      <TableWright rows={people} columns={withCode.filter(({ field }) => field !== 'name')} />,
+    );
+    expect(headerFields()).toEqual(['code', 'city', 'id', 'role', 'country']);
+  });
+
+  it('reorders controlled pinned columns through onPinnedColumnsChange', () => {
+    const onPinnedColumnsChange = vi.fn();
+    const { rerender } = render(
+      <TableWright
+        rows={people}
+        columns={peopleColumns}
+        pinnedColumns={{ left: ['name', 'role'] }}
+        onPinnedColumnsChange={onPinnedColumnsChange}
+      />,
+    );
+
+    dragHeader('Name', ['Role']);
+
+    expect(onPinnedColumnsChange).toHaveBeenLastCalledWith({ left: ['role', 'name'] });
+    // Still controlled: nothing moves until the parent passes the new model.
+    expect(headerFields()).toEqual(['name', 'role', 'id', 'city']);
+
+    rerender(
+      <TableWright
+        rows={people}
+        columns={peopleColumns}
+        pinnedColumns={onPinnedColumnsChange.mock.lastCall![0]}
+        onPinnedColumnsChange={onPinnedColumnsChange}
+      />,
+    );
+    expect(headerFields()).toEqual(['role', 'name', 'id', 'city']);
+  });
+});
+
+describe('TableWright hooks outside a TableWright', () => {
+  it.each([
+    ['useColumnPinning', useColumnPinning],
+    ['useColumnReorder', useColumnReorder],
+    ['useDetailPanel', useDetailPanel],
+  ])('%s throws a helpful error', (_name, hook) => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    expect(() => renderHook(() => hook())).toThrow(/must be used inside a TableWright/);
   });
 });

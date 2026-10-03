@@ -1,5 +1,6 @@
 import { Box, ScopedCssBaseline, ThemeProvider, Typography, createTheme } from '@mui/material';
 import type { Decorator, Preview } from '@storybook/react-vite';
+import type {} from '@mui/x-data-grid/themeAugmentation';
 import type { ReactNode } from 'react';
 
 const ThemeMode = {
@@ -11,9 +12,23 @@ const ThemeMode = {
 type ThemeMode = (typeof ThemeMode)[keyof typeof ThemeMode];
 type PaletteMode = Exclude<ThemeMode, typeof ThemeMode.SideBySide>;
 
+// Grid panels (columns, filters) are portaled to <body>, outside ScopedCssBaseline, and set a
+// background but no text color — so they would inherit the browser's default black.
+const createStoryTheme = (mode: PaletteMode) =>
+  createTheme({
+    palette: { mode },
+    components: {
+      MuiDataGrid: {
+        styleOverrides: {
+          panelContent: ({ theme }) => ({ color: theme.palette.text.primary }),
+        },
+      },
+    },
+  });
+
 const themes = {
-  [ThemeMode.Light]: createTheme({ palette: { mode: ThemeMode.Light } }),
-  [ThemeMode.Dark]: createTheme({ palette: { mode: ThemeMode.Dark } }),
+  [ThemeMode.Light]: createStoryTheme(ThemeMode.Light),
+  [ThemeMode.Dark]: createStoryTheme(ThemeMode.Dark),
 } as const satisfies Record<PaletteMode, ReturnType<typeof createTheme>>;
 
 const renderThemed = (mode: PaletteMode, story: ReactNode, fill: boolean, caption?: string) => (

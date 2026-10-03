@@ -53,5 +53,11 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     css: false,
+    coverage: {
+      provider: 'v8',
+      include: ['src/**'],
+      exclude: ['src/stories/**', 'src/test/**', 'src/types/**', 'src/**/*.test.{ts,tsx}'],
+      reporter: ['text', 'html'],
+    },
   },
 });

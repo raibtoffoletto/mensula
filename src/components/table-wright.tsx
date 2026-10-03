@@ -1,6 +1,9 @@
 import ColumnMenu from '@components/column-menu';
+import ColumnsManagement from '@components/columns-management';
 import DetailPanelRow from '@components/detail-panel-row';
 import PinnedRows from '@components/pinned-rows';
+import useColumnHeaderReorder from '@hooks/use-column-header-reorder';
+import useColumnOrderState, { type ColumnReorderProps } from '@hooks/use-column-order-state';
 import useDetailPanelState, { type DetailPanelProps } from '@hooks/use-detail-panel-state';
 import usePinningState, { type PinningProps } from '@hooks/use-pinning-state';
 import {
@@ -15,6 +18,7 @@ import {
   type GridPinnedColumnFields,
   type GridRowId,
 } from '@mui/x-data-grid';
+import ColumnOrderProvider from '@providers/column-order';
 import DetailPanelProvider from '@providers/detail-panel';
 import PinningProvider from '@providers/pinning';
 import { useMemo } from 'react';
@@ -24,9 +28,13 @@ export type TableWrightInitialState = GridInitialState & {
   pinnedColumns?: GridPinnedColumnFields;
 };
 
-export type TableWrightProps = Omit<DataGridProps, 'getDetailPanelContent' | 'initialState'> &
+export type TableWrightProps = Omit<
+  DataGridProps,
+  'getDetailPanelContent' | 'initialState' | 'onColumnOrderChange'
+> &
   DetailPanelProps &
-  PinningProps & {
+  PinningProps &
+  ColumnReorderProps & {
     initialState?: TableWrightInitialState;
   };
 
@@ -41,6 +49,8 @@ const TableWright = ({
   pinnedColumnsSectionSeparator = 'border-and-shadow',
   pinnedRows,
   pinnedRowsSectionSeparator = 'border-and-shadow',
+  disableColumnReorder,
+  onColumnOrderChange,
   initialState: initialStateProp,
   ...props
 }: TableWrightProps) => {
@@ -80,13 +90,24 @@ const TableWright = ({
     disableColumnPinning,
     pinnedRows,
     initialPinnedColumns,
-    columns,
     getRowId: props.getRowId,
   });
+
+  const columnOrderValue = useColumnOrderState({
+    apiRef,
+    columns,
+    initialOrderedFields: initialState.columns?.orderedFields,
+    pinning: pinningValue,
+    disableColumnReorder,
+    onColumnOrderChange,
+  });
+
+  useColumnHeaderReorder(apiRef, columnOrderValue);
 
   const slots = useMemo(
     () => ({
       columnMenu: ColumnMenu,
+      columnsManagement: ColumnsManagement,
       ...props.slots,
       pinnedRows: PinnedRows,
       ...(hasDetailPanels && { row: DetailPanelRow }),
@@ -99,17 +120,19 @@ const TableWright = ({
 
   return (
     <PinningProvider value={pinningValue}>
-      <DetailPanelProvider value={detailPanelValue}>
-        <DataGrid
-          {...props}
-          {...separators}
-          apiRef={apiRef}
-          initialState={initialState}
-          columns={columns}
-          slots={slots}
-          getRowSpacing={hasDetailPanels ? getRowSpacing : props.getRowSpacing}
-        />
-      </DetailPanelProvider>
+      <ColumnOrderProvider value={columnOrderValue}>
+        <DetailPanelProvider value={detailPanelValue}>
+          <DataGrid
+            {...props}
+            {...separators}
+            apiRef={apiRef}
+            initialState={initialState}
+            columns={columns}
+            slots={slots}
+            getRowSpacing={hasDetailPanels ? getRowSpacing : props.getRowSpacing}
+          />
+        </DetailPanelProvider>
+      </ColumnOrderProvider>
     </PinningProvider>
   );
 };

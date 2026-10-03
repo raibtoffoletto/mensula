@@ -17,7 +17,7 @@ Extension of `@mui/x-data-grid` (community) published as an ESM-only React compo
 - **Peer-dep model.** `react`, `react-dom`, `@mui/material`, `@mui/system`, `@mui/x-data-grid`, `@emotion/react`, `@emotion/styled` are peers — never bundle them.
 - `rolldownOptions.external` in `vite.config.ts` is derived from `peerDependencies` (subpaths included) — add a peer in `package.json` and it is externalized automatically.
 - The published `dist/` is the only shipped artifact (see `files` in `package.json`).
-- **MUI internals are quarantined.** Prefer public `@mui/x-data-grid` APIs. Where a Pro feature can only be rebuilt the way Pro does it (pipe processors, private `apiRef`, the virtualizer), import from `@mui/x-data-grid/internals` **only** in `src/components/pinning-sync.tsx` and `src/components/pinned-rows.tsx` (extend that list deliberately). Because internals carry no semver guarantee, the `@mui/x-data-grid` peer range is pinned to the tested minor (`~9.14.0`); bump it only after `yarn test` and the Storybook stories pass on the new minor.
+- **MUI internals are quarantined.** Prefer public `@mui/x-data-grid` APIs. Where a Pro feature can only be rebuilt the way Pro does it (pipe processors, private `apiRef`, the virtualizer), import from `@mui/x-data-grid/internals` **only** in `src/components/pinning-sync.tsx` and `src/components/pinned-rows.tsx` (extend that list deliberately). `src/components/columns-management.tsx` may import the `vars` CSS-variable map from internals — nothing else — so the rebuilt columns panel matches the stock one. Because internals carry no semver guarantee, the `@mui/x-data-grid` peer range is pinned to the tested minor (`~9.14.0`); bump it only after `yarn test` and the Storybook stories pass on the new minor.
 
 ## Layout
 
@@ -40,7 +40,7 @@ Path aliases: `@components/*`, `@contexts/*`, `@hooks/*`, `@lib/*`, `@providers/
 
 ## Testing
 
-- `yarn test` runs once; `yarn test:watch` for development.
+- `yarn test` runs once; `yarn test:watch` for development; `yarn test:coverage` adds a v8 coverage report (text + `coverage/index.html`).
 - Tests must render through RTL (`@testing-library/react`) — no shallow rendering.
 - `@testing-library/jest-dom/vitest` matchers are globally available via the setup file.
 
