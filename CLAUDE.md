@@ -23,10 +23,10 @@ Extension of `@mui/x-data-grid` (community) published as an ESM-only React compo
 Directory-per-role under `src/`:
 
 ```
-src/components/   src/hooks/   src/lib/   src/types/   src/test/
+src/components/   src/contexts/   src/hooks/   src/lib/   src/providers/   src/types/   src/test/
 ```
 
-Path aliases: `@components/*`, `@hooks/*`, `@lib/*`, `@types/*`. Declared in **both** `tsconfig.json` (`paths`) and `vite.config.ts` (`resolve.alias`) — keep them in sync.
+Path aliases: `@components/*`, `@contexts/*`, `@hooks/*`, `@lib/*`, `@providers/*`, `@types/*`. Declared in **both** `tsconfig.json` (`paths`) and `vite.config.ts` (`resolve.alias`) — keep them in sync.
 
 ## Component conventions
 

@@ -22,8 +22,10 @@
     "sourceMap": true,
     "paths": {
       "@components/*": ["./src/components/*"],
+      "@contexts/*": ["./src/contexts/*"],
       "@hooks/*": ["./src/hooks/*"],
       "@lib/*": ["./src/lib/*"],
+      "@providers/*": ["./src/providers/*"],
       "@types/*": ["./src/types/*"]
     }
   },
