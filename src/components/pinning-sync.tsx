@@ -45,7 +45,7 @@ const toCache = ({ top, bottom }: { top: GridRowEntry[]; bottom: GridRowEntry[] 
  */
 const PinningSync = () => {
   const apiRef = useGridPrivateApiContext();
-  const { pinnedColumns, pinnedRows } = usePinningContext();
+  const { pinnedColumns, pinnedRowEntries: pinnedRows } = usePinningContext();
   const { fieldOrder } = useColumnOrderContext();
 
   // Processors read the latest values through refs so they are registered exactly once.

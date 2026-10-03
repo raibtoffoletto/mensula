@@ -1,11 +1,17 @@
 export { default as TableWright } from '@components/table-wright';
-export type { TableWrightInitialState, TableWrightProps } from '@components/table-wright';
+export type {
+  TableWrightInitialState,
+  TableWrightLocaleText,
+  TableWrightProps,
+} from '@components/table-wright';
 export { default as TableWrightColumnMenu } from '@components/column-menu';
 export { default as ColumnMenuPinningItem } from '@components/column-menu-pinning-item';
 export { default as useColumnPinning } from '@hooks/use-column-pinning';
-export type { ColumnPinningApi, PinnedRowsProp } from '@contexts/pinning';
+export { default as useRowPinning } from '@hooks/use-row-pinning';
+export type { ColumnPinningApi, PinnedRowsProp, RowPinningApi } from '@contexts/pinning';
 export type { PinningProps } from '@hooks/use-pinning-state';
-export { PinnedColumnSide, PinnedRowPosition } from '@lib/constants';
+export { PinnedColumnSide, PinnedRowPosition, ROW_HIGHLIGHTED_CLASS } from '@lib/constants';
+export type { RowMenuLocaleText } from '@lib/constants';
 export { default as TableWrightColumnsManagement } from '@components/columns-management';
 export type { ColumnsManagementProps } from '@components/columns-management';
 export { default as useColumnReorder } from '@hooks/use-column-reorder';
@@ -19,3 +25,7 @@ export {
   GRID_DETAIL_PANEL_TOGGLE_COL_DEF,
   GRID_DETAIL_PANEL_TOGGLE_FIELD,
 } from '@lib/detail-panel';
+export { default as useRowHighlight } from '@hooks/use-row-highlight';
+export type { RowHighlightApi } from '@contexts/row-highlight';
+export type { RowHighlightProps } from '@hooks/use-row-highlight-state';
+export { GRID_ROW_MENU_COL_DEF, GRID_ROW_MENU_FIELD } from '@lib/row-menu';

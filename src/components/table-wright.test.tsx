@@ -1,7 +1,11 @@
 import useColumnPinning from '@hooks/use-column-pinning';
 import useColumnReorder from '@hooks/use-column-reorder';
 import useDetailPanel from '@hooks/use-detail-panel';
+import useRowHighlight from '@hooks/use-row-highlight';
+import useRowPinning from '@hooks/use-row-pinning';
+import { ROW_HIGHLIGHTED_CLASS } from '@lib/constants';
 import { GRID_DETAIL_PANEL_TOGGLE_COL_DEF } from '@lib/detail-panel';
+import { GRID_ROW_MENU_COL_DEF } from '@lib/row-menu';
 import { DRAG_PREVIEW_CLASS } from '@lib/drag-preview';
 import type { GridRowId, GridRowParams } from '@mui/x-data-grid';
 import {
@@ -542,6 +546,371 @@ describe('TableWright row pinning', () => {
   });
 });
 
+describe('TableWright row menu', () => {
+  const people = [
+    { id: 1, name: 'Ada' },
+    { id: 2, name: 'Linus' },
+    { id: 3, name: 'Grace' },
+  ];
+  const nameColumns = [{ field: 'name', headerName: 'Name' }];
+  const section = (position: 'top' | 'bottom') =>
+    document.querySelector(`.MuiDataGrid-pinnedRows--${position}`) as HTMLElement | null;
+  const rowOf = (name: string) => screen.getByText(name).closest('[role="row"]') as HTMLElement;
+  const menuItems = () => screen.getAllByRole('menuitem').map((item) => item.textContent);
+  const openMenu = async (user: ReturnType<typeof userEvent.setup>, name: string) =>
+    user.click(within(rowOf(name)).getByRole('button', { name: 'more' }));
+  const choose = async (user: ReturnType<typeof userEvent.setup>, name: string, label: string) => {
+    await openMenu(user, name);
+    await user.click(screen.getByRole('menuitem', { name: label }));
+  };
+  const headerFields = () =>
+    screen.getAllByRole('columnheader').map((header) => header.getAttribute('data-field'));
+
+  it('adds no menu column without showRowMenu', () => {
+    render(<TableWright rows={people} columns={nameColumns} />);
+
+    expect(headerFields()).toEqual(['name']);
+  });
+
+  it('prepends a labelled, fixed menu column after the checkbox column', () => {
+    render(
+      <TableWright
+        rows={people}
+        columns={nameColumns}
+        showRowMenu
+        checkboxSelection
+        getDetailPanelContent={getDetailPanelContent}
+      />,
+    );
+
+    expect(headerFields()).toEqual([
+      '__check__',
+      '__row_menu__',
+      '__detail_panel_toggle__',
+      'name',
+    ]);
+    expect(screen.getByRole('columnheader', { name: 'Row menu' })).toBeInTheDocument();
+  });
+
+  it('keeps a consumer-placed menu column instead of adding another', () => {
+    render(
+      <TableWright rows={people} columns={[...nameColumns, GRID_ROW_MENU_COL_DEF]} showRowMenu />,
+    );
+
+    expect(headerFields()).toEqual(['name', '__row_menu__']);
+  });
+
+  it('does not select the row or fire onRowClick when used', async () => {
+    const user = userEvent.setup();
+    const onRowClick = vi.fn();
+    render(<TableWright rows={people} columns={nameColumns} showRowMenu onRowClick={onRowClick} />);
+
+    await openMenu(user, 'Ada');
+
+    expect(onRowClick).not.toHaveBeenCalled();
+    expect(rowOf('Ada')).not.toHaveClass('Mui-selected');
+  });
+
+  it('pins a row to the top, moves it to the bottom, and unpins it', async () => {
+    const user = userEvent.setup();
+    const onPinnedRowsChange = vi.fn();
+    render(
+      <TableWright
+        rows={people}
+        columns={nameColumns}
+        showRowMenu
+        onPinnedRowsChange={onPinnedRowsChange}
+      />,
+    );
+
+    await openMenu(user, 'Linus');
+    expect(menuItems()).toEqual(['Pin to top', 'Pin to bottom', 'Highlight']);
+    await user.click(screen.getByRole('menuitem', { name: 'Pin to top' }));
+
+    expect(within(section('top')!).getByText('Linus')).toBeInTheDocument();
+    expect(screen.getAllByText('Linus')).toHaveLength(1);
+    expect(onPinnedRowsChange).toHaveBeenLastCalledWith({ top: [people[1]], bottom: [] });
+
+    await openMenu(user, 'Linus');
+    expect(menuItems()).toEqual(['Unpin', 'Pin to bottom', 'Highlight']);
+    await user.click(screen.getByRole('menuitem', { name: 'Pin to bottom' }));
+
+    expect(section('top')).toBeNull();
+    expect(within(section('bottom')!).getByText('Linus')).toBeInTheDocument();
+
+    await openMenu(user, 'Linus');
+    expect(menuItems()).toEqual(['Pin to top', 'Unpin', 'Highlight']);
+    await user.click(screen.getByRole('menuitem', { name: 'Unpin' }));
+
+    expect(section('bottom')).toBeNull();
+    expect(onPinnedRowsChange).toHaveBeenLastCalledWith({ top: [], bottom: [] });
+  });
+
+  it('pins next to the scrolling rows, keeping rows pinned through initialState', async () => {
+    const user = userEvent.setup();
+    render(
+      <TableWright
+        rows={people}
+        columns={nameColumns}
+        showRowMenu
+        initialState={{ pinnedRows: { top: [people[0]!], bottom: [people[2]!] } }}
+      />,
+    );
+
+    await choose(user, 'Linus', 'Pin to bottom');
+
+    const bottom = within(section('bottom')!).getAllByRole('row');
+    expect(bottom.map((row) => row.textContent)).toEqual(['Linus', 'Grace']);
+    expect(within(section('top')!).getByText('Ada')).toBeInTheDocument();
+  });
+
+  it('only reports changes when pinnedRows is controlled', async () => {
+    const user = userEvent.setup();
+    const onPinnedRowsChange = vi.fn();
+    const pinnedRows = { top: [people[0]!] };
+    render(
+      <TableWright
+        rows={people}
+        columns={nameColumns}
+        showRowMenu
+        pinnedRows={pinnedRows}
+        onPinnedRowsChange={onPinnedRowsChange}
+      />,
+    );
+
+    await choose(user, 'Ada', 'Unpin');
+
+    expect(onPinnedRowsChange).toHaveBeenCalledWith({ top: [], bottom: [] });
+    expect(within(section('top')!).getByText('Ada')).toBeInTheDocument();
+  });
+
+  it('offers only highlighting on pinned rows that are not in rows', async () => {
+    const user = userEvent.setup();
+    render(
+      <TableWright
+        rows={people}
+        columns={nameColumns}
+        showRowMenu
+        pinnedRows={{ bottom: [{ id: 'total', name: 'Total' }] }}
+      />,
+    );
+
+    await openMenu(user, 'Total');
+
+    expect(menuItems()).toEqual(['Highlight']);
+  });
+
+  it('highlights and un-highlights a row', async () => {
+    const user = userEvent.setup();
+    const onHighlightedRowIdsChange = vi.fn();
+    render(
+      <TableWright
+        rows={people}
+        columns={nameColumns}
+        showRowMenu
+        onHighlightedRowIdsChange={onHighlightedRowIdsChange}
+        getRowClassName={() => 'custom'}
+      />,
+    );
+
+    await choose(user, 'Grace', 'Highlight');
+
+    expect(rowOf('Grace')).toHaveClass(ROW_HIGHLIGHTED_CLASS, 'custom');
+    expect(rowOf('Ada')).not.toHaveClass(ROW_HIGHLIGHTED_CLASS);
+    expect(onHighlightedRowIdsChange).toHaveBeenLastCalledWith(new Set([3]));
+
+    await choose(user, 'Grace', 'Remove highlight');
+
+    expect(rowOf('Grace')).not.toHaveClass(ROW_HIGHLIGHTED_CLASS);
+    expect(rowOf('Grace')).toHaveClass('custom');
+    expect(onHighlightedRowIdsChange).toHaveBeenLastCalledWith(new Set());
+  });
+
+  it('keeps the highlight while a row is pinned', async () => {
+    const user = userEvent.setup();
+    render(
+      <TableWright
+        rows={people}
+        columns={nameColumns}
+        showRowMenu
+        initialState={{ highlightedRowIds: new Set([2]) }}
+      />,
+    );
+
+    expect(rowOf('Linus')).toHaveClass(ROW_HIGHLIGHTED_CLASS);
+
+    await choose(user, 'Linus', 'Pin to top');
+
+    expect(rowOf('Linus')).toHaveClass(ROW_HIGHLIGHTED_CLASS);
+    expect(section('top')).toContainElement(rowOf('Linus'));
+  });
+
+  it('supports controlled highlighted rows without the menu', () => {
+    const { rerender } = render(
+      <TableWright rows={people} columns={nameColumns} highlightedRowIds={new Set([1])} />,
+    );
+
+    expect(rowOf('Ada')).toHaveClass(ROW_HIGHLIGHTED_CLASS);
+
+    rerender(<TableWright rows={people} columns={nameColumns} highlightedRowIds={new Set([2])} />);
+
+    expect(rowOf('Ada')).not.toHaveClass(ROW_HIGHLIGHTED_CLASS);
+    expect(rowOf('Linus')).toHaveClass(ROW_HIGHLIGHTED_CLASS);
+  });
+
+  it('translates its labels through localeText', async () => {
+    const user = userEvent.setup();
+    render(
+      <TableWright
+        rows={people}
+        columns={nameColumns}
+        showRowMenu
+        localeText={{ rowMenuHeaderLabel: 'Menu da linha', rowMenuHighlight: 'Destacar' }}
+      />,
+    );
+
+    expect(screen.getByRole('columnheader', { name: 'Menu da linha' })).toBeInTheDocument();
+    await openMenu(user, 'Ada');
+    expect(menuItems()).toContain('Destacar');
+  });
+
+  it('exposes pinning and highlighting to custom UI via useRowPinning and useRowHighlight', async () => {
+    const user = userEvent.setup();
+    const Controls = () => {
+      const { pinRow, isRowPinned } = useRowPinning();
+      const { toggleRowHighlight, highlightedRowIds } = useRowHighlight();
+      return (
+        <div>
+          <button type="button" onClick={() => pinRow(3, 'top')}>
+            pin
+          </button>
+          <button type="button" onClick={() => toggleRowHighlight(1)}>
+            highlight
+          </button>
+          <span>{`pinned:${String(isRowPinned(3))} highlighted:${highlightedRowIds.size}`}</span>
+        </div>
+      );
+    };
+    render(
+      <TableWright rows={people} columns={nameColumns} slots={{ toolbar: Controls }} showToolbar />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'pin' }));
+    await user.click(screen.getByRole('button', { name: 'highlight' }));
+
+    expect(screen.getByText('pinned:top highlighted:1')).toBeInTheDocument();
+    expect(within(section('top')!).getByText('Grace')).toBeInTheDocument();
+    expect(rowOf('Ada')).toHaveClass(ROW_HIGHLIGHTED_CLASS);
+  });
+});
+
+describe('TableWright shift-click highlight', () => {
+  const people = [
+    { id: 1, name: 'Ada' },
+    { id: 2, name: 'Linus' },
+    { id: 3, name: 'Grace' },
+  ];
+  const nameColumns = [{ field: 'name', headerName: 'Name' }];
+  const rowOf = (name: string) => screen.getByText(name).closest('[role="row"]') as HTMLElement;
+  const shiftClick = async (
+    user: ReturnType<typeof userEvent.setup>,
+    target: Element,
+    keys = '{Shift>}',
+  ) => {
+    await user.keyboard(keys);
+    await user.click(target);
+    await user.keyboard('{/Shift}{/Control}');
+  };
+
+  it('toggles the highlight instead of selecting or firing onRowClick', async () => {
+    const user = userEvent.setup();
+    const onRowClick = vi.fn();
+    const onHighlightedRowIdsChange = vi.fn();
+    render(
+      <TableWright
+        rows={people}
+        columns={nameColumns}
+        checkboxSelection
+        onRowClick={onRowClick}
+        onHighlightedRowIdsChange={onHighlightedRowIdsChange}
+      />,
+    );
+
+    await user.click(screen.getByText('Ada'));
+    expect(rowOf('Ada')).toHaveClass('Mui-selected');
+    expect(onRowClick).toHaveBeenCalledTimes(1);
+
+    await shiftClick(user, screen.getByText('Grace'));
+
+    expect(rowOf('Grace')).toHaveClass(ROW_HIGHLIGHTED_CLASS);
+    expect(onHighlightedRowIdsChange).toHaveBeenLastCalledWith(new Set([3]));
+    // No range selection from Ada to Grace.
+    expect(rowOf('Linus')).not.toHaveClass('Mui-selected');
+    expect(rowOf('Grace')).not.toHaveClass('Mui-selected');
+    expect(onRowClick).toHaveBeenCalledTimes(1);
+
+    await shiftClick(user, screen.getByText('Grace'));
+
+    expect(rowOf('Grace')).not.toHaveClass(ROW_HIGHLIGHTED_CLASS);
+  });
+
+  it('ignores plain clicks and Shift combined with other modifiers', async () => {
+    const user = userEvent.setup();
+    render(<TableWright rows={people} columns={nameColumns} />);
+
+    await user.click(screen.getByText('Ada'));
+    await shiftClick(user, screen.getByText('Linus'), '{Control>}{Shift>}');
+
+    expect(document.querySelector(`.${ROW_HIGHLIGHTED_CLASS}`)).toBeNull();
+  });
+
+  it('leaves the checkbox and row menu cells alone', async () => {
+    const user = userEvent.setup();
+    render(<TableWright rows={people} columns={nameColumns} checkboxSelection showRowMenu />);
+
+    await shiftClick(user, within(rowOf('Ada')).getByRole('checkbox'));
+    await shiftClick(user, within(rowOf('Linus')).getByRole('button', { name: 'more' }));
+
+    expect(document.querySelector(`.${ROW_HIGHLIGHTED_CLASS}`)).toBeNull();
+    expect(rowOf('Ada')).toHaveClass('Mui-selected');
+    expect(screen.getByRole('menu')).toBeInTheDocument();
+  });
+
+  it('highlights pinned rows too', async () => {
+    const user = userEvent.setup();
+    render(
+      <TableWright
+        rows={people}
+        columns={nameColumns}
+        pinnedRows={{ top: [{ id: 'total', name: 'Total' }] }}
+      />,
+    );
+
+    await shiftClick(user, screen.getByText('Total'));
+
+    expect(rowOf('Total')).toHaveClass(ROW_HIGHLIGHTED_CLASS);
+  });
+
+  it('gives Shift + click back to the grid with disableRowHighlightOnShiftClick', async () => {
+    const user = userEvent.setup();
+    render(
+      <TableWright
+        rows={people}
+        columns={nameColumns}
+        checkboxSelection
+        disableRowHighlightOnShiftClick
+      />,
+    );
+
+    await user.click(screen.getByText('Ada'));
+    await shiftClick(user, screen.getByText('Grace'));
+
+    expect(document.querySelector(`.${ROW_HIGHLIGHTED_CLASS}`)).toBeNull();
+    expect(rowOf('Linus')).toHaveClass('Mui-selected');
+    expect(rowOf('Grace')).toHaveClass('Mui-selected');
+  });
+});
+
 describe('TableWright column reordering', () => {
   const people = [{ id: 1, name: 'Ada', role: 'Engineer', city: 'London' }];
   const peopleColumns = [
@@ -881,11 +1250,118 @@ describe('TableWright column reordering', () => {
   });
 });
 
+describe('TableWright context menu', () => {
+  const people = [
+    { id: 1, name: 'Ada' },
+    { id: 2, name: 'Linus' },
+    { id: 3, name: 'Grace' },
+  ];
+  const nameColumns = [{ field: 'name', headerName: 'Name' }];
+  const cellOf = (name: string) => screen.getByText(name);
+  const headerOf = (name: string) => screen.getByRole('columnheader', { name });
+  const menuItems = () => screen.getAllByRole('menuitem').map((item) => item.textContent);
+  // `fireEvent` returns false when a listener called `preventDefault()`.
+  const rightClick = (element: Element) =>
+    fireEvent.contextMenu(element, { clientX: 40, clientY: 60 });
+
+  it('opens the row menu on a right-clicked row, without the menu column', async () => {
+    const user = userEvent.setup();
+    const onPinnedRowsChange = vi.fn();
+    render(
+      <TableWright
+        rows={people}
+        columns={nameColumns}
+        pinnedRows={{}}
+        onPinnedRowsChange={onPinnedRowsChange}
+      />,
+    );
+
+    expect(rightClick(cellOf('Linus'))).toBe(false);
+    expect(menuItems()).toEqual(['Pin to top', 'Pin to bottom', 'Highlight']);
+
+    await user.click(screen.getByRole('menuitem', { name: 'Pin to top' }));
+
+    expect(onPinnedRowsChange).toHaveBeenLastCalledWith({ top: [people[1]], bottom: [] });
+    await waitFor(() => expect(screen.queryByRole('menu')).not.toBeInTheDocument());
+  });
+
+  it('opens it on pinned rows and alongside the menu column, translated', async () => {
+    const user = userEvent.setup();
+    render(
+      <TableWright
+        rows={people}
+        columns={nameColumns}
+        showRowMenu
+        pinnedRows={{ bottom: [{ id: 'total', name: 'Total' }] }}
+        localeText={{ rowMenuHighlight: 'Destacar' }}
+      />,
+    );
+
+    rightClick(cellOf('Total'));
+    expect(menuItems()).toEqual(['Destacar']);
+
+    await user.click(screen.getByRole('menuitem', { name: 'Destacar' }));
+
+    expect(cellOf('Total').closest('[role="row"]')).toHaveClass(ROW_HIGHLIGHTED_CLASS);
+  });
+
+  it('opens the column menu on a right-clicked header', async () => {
+    render(<TableWright rows={people} columns={nameColumns} />);
+
+    expect(rightClick(headerOf('Name'))).toBe(false);
+
+    expect(await screen.findByRole('menu')).toBeInTheDocument();
+    expect(menuItems()).toEqual(expect.arrayContaining(['Pin to left', 'Hide column']));
+  });
+
+  it('keeps the browser menu on headers without a column menu and in text fields', () => {
+    render(
+      <TableWright
+        rows={people}
+        columns={[
+          { ...nameColumns[0]!, disableColumnMenu: true },
+          {
+            field: 'note',
+            headerName: 'Note',
+            renderCell: () => <input aria-label="note" />,
+          },
+        ]}
+      />,
+    );
+
+    expect(rightClick(headerOf('Name'))).toBe(true);
+    expect(rightClick(screen.getAllByRole('textbox', { name: 'note' })[0]!)).toBe(true);
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+  });
+
+  it('hides the menu button with hideColumnMenu, keeping the menu a right-click away', async () => {
+    render(<TableWright rows={people} columns={nameColumns} hideColumnMenu />);
+
+    const icon = headerOf('Name').querySelector('.MuiDataGrid-menuIcon');
+    expect(icon).toHaveStyle({ visibility: 'hidden' });
+
+    rightClick(headerOf('Name'));
+
+    expect(await screen.findByRole('menu')).toBeInTheDocument();
+    expect(icon).toHaveStyle({ visibility: 'hidden' });
+  });
+
+  it('keeps the browser menu everywhere with disableContextMenu', () => {
+    render(<TableWright rows={people} columns={nameColumns} showRowMenu disableContextMenu />);
+
+    expect(rightClick(cellOf('Ada'))).toBe(true);
+    expect(rightClick(headerOf('Name'))).toBe(true);
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+  });
+});
+
 describe('TableWright hooks outside a TableWright', () => {
   it.each([
     ['useColumnPinning', useColumnPinning],
     ['useColumnReorder', useColumnReorder],
     ['useDetailPanel', useDetailPanel],
+    ['useRowPinning', useRowPinning],
+    ['useRowHighlight', useRowHighlight],
   ])('%s throws a helpful error', (_name, hook) => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
 
