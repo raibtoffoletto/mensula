@@ -1,3 +1,4 @@
+import useColumnPinning from '@hooks/use-column-pinning';
 import useDetailPanel from '@hooks/use-detail-panel';
 import { GRID_DETAIL_PANEL_TOGGLE_COL_DEF } from '@lib/detail-panel';
 import type { GridRowId, GridRowParams } from '@mui/x-data-grid';
@@ -185,5 +186,212 @@ describe('TableWright master-detail', () => {
     await user.click(within(panel).getByRole('button'));
 
     expect(screen.queryByText('Close 1')).not.toBeInTheDocument();
+  });
+});
+
+describe('TableWright column pinning', () => {
+  const people = [
+    { id: 1, name: 'Ada', role: 'Engineer', city: 'London' },
+    { id: 2, name: 'Linus', role: 'Maintainer', city: 'Portland' },
+  ];
+  const peopleColumns = [
+    { field: 'id', headerName: 'ID' },
+    { field: 'name', headerName: 'Name' },
+    { field: 'role', headerName: 'Role' },
+    { field: 'city', headerName: 'City' },
+  ];
+  const headerFields = () =>
+    screen.getAllByRole('columnheader').map((header) => header.getAttribute('data-field'));
+  const header = (name: string) => screen.getByRole('columnheader', { name });
+
+  it('pins columns from initialState to the edges', () => {
+    render(
+      <TableWright
+        rows={people}
+        columns={peopleColumns}
+        initialState={{ pinnedColumns: { left: ['name'], right: ['id'] } }}
+      />,
+    );
+
+    expect(headerFields()).toEqual(['name', 'role', 'city', 'id']);
+    expect(header('Name')).toHaveClass('MuiDataGrid-columnHeader--pinnedLeft');
+    expect(header('ID')).toHaveClass('MuiDataGrid-columnHeader--pinnedRight');
+    expect(screen.getByText('Ada').closest('[role="gridcell"]')).toHaveClass(
+      'MuiDataGrid-cell--pinnedLeft',
+    );
+  });
+
+  it('returns a column to its declared position when unpinned', () => {
+    const { rerender } = render(
+      <TableWright rows={people} columns={peopleColumns} pinnedColumns={{ right: ['name'] }} />,
+    );
+    expect(headerFields()).toEqual(['id', 'role', 'city', 'name']);
+
+    rerender(<TableWright rows={people} columns={peopleColumns} pinnedColumns={{}} />);
+
+    expect(headerFields()).toEqual(['id', 'name', 'role', 'city']);
+    expect(header('Name')).not.toHaveClass('MuiDataGrid-columnHeader--pinnedRight');
+  });
+
+  it('pins and unpins from the column menu', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(<TableWright rows={people} columns={peopleColumns} onPinnedColumnsChange={onChange} />);
+
+    await user.click(within(header('City')).getByLabelText('City column menu'));
+    await user.click(screen.getByRole('menuitem', { name: 'Pin to left' }));
+
+    expect(onChange).toHaveBeenLastCalledWith({ left: ['city'], right: [] });
+    expect(headerFields()).toEqual(['city', 'id', 'name', 'role']);
+
+    await user.click(within(header('City')).getByLabelText('City column menu'));
+    expect(screen.getByRole('menuitem', { name: 'Pin to right' })).toBeInTheDocument();
+    await user.click(screen.getByRole('menuitem', { name: 'Unpin' }));
+
+    expect(onChange).toHaveBeenLastCalledWith({ left: [], right: [] });
+    expect(headerFields()).toEqual(['id', 'name', 'role', 'city']);
+  });
+
+  it('hides the menu items with disableColumnPinning or pinnable: false', async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(
+      <TableWright rows={people} columns={peopleColumns} disableColumnPinning />,
+    );
+    await user.click(within(header('Role')).getByLabelText('Role column menu'));
+    expect(screen.queryByRole('menuitem', { name: 'Pin to left' })).not.toBeInTheDocument();
+    await user.keyboard('{Escape}');
+
+    rerender(
+      <TableWright
+        rows={people}
+        columns={peopleColumns.map((column) => ({ ...column, pinnable: column.field !== 'role' }))}
+      />,
+    );
+    await user.click(within(header('Role')).getByLabelText('Role column menu'));
+    expect(screen.queryByRole('menuitem', { name: 'Pin to left' })).not.toBeInTheDocument();
+  });
+
+  it('keeps the checkbox column first and lets it be pinned', () => {
+    render(
+      <TableWright
+        rows={people}
+        columns={peopleColumns}
+        checkboxSelection
+        initialState={{ pinnedColumns: { left: ['__check__', 'name'] } }}
+      />,
+    );
+
+    expect(headerFields()).toEqual(['__check__', 'name', 'id', 'role', 'city']);
+  });
+
+  it('exposes pinning to custom UI via useColumnPinning', async () => {
+    const user = userEvent.setup();
+    const PinHeader = () => {
+      const { pinColumn, isColumnPinned } = useColumnPinning();
+      return (
+        <button onClick={() => pinColumn('role', 'right')}>
+          Role {isColumnPinned('role') || 'free'}
+        </button>
+      );
+    };
+    render(
+      <TableWright
+        rows={people}
+        columns={peopleColumns.map((column) =>
+          column.field === 'role' ? { ...column, renderHeader: () => <PinHeader /> } : column,
+        )}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Role free' }));
+
+    expect(screen.getByRole('button', { name: 'Role right' })).toBeInTheDocument();
+    expect(headerFields().at(-1)).toBe('role');
+  });
+});
+
+describe('TableWright row pinning', () => {
+  const people = [
+    { id: 1, name: 'Ada' },
+    { id: 2, name: 'Linus' },
+    { id: 3, name: 'Grace' },
+  ];
+  const nameColumns = [{ field: 'name', headerName: 'Name' }];
+  const pinnedRows = {
+    top: [{ id: 'total', name: 'Total' }],
+    bottom: [{ id: 'avg', name: 'Avg' }],
+  };
+  const section = (position: 'top' | 'bottom') =>
+    document.querySelector(`.MuiDataGrid-pinnedRows--${position}`) as HTMLElement;
+
+  it('renders pinned rows above and below the scrolling rows', () => {
+    render(<TableWright rows={people} columns={nameColumns} pinnedRows={pinnedRows} />);
+
+    expect(within(section('top')).getByText('Total')).toBeInTheDocument();
+    expect(within(section('bottom')).getByText('Avg')).toBeInTheDocument();
+    expect(screen.getByRole('grid')).toHaveAttribute('aria-rowcount', '6');
+  });
+
+  it('keeps pinned rows out of filtering and sorting', () => {
+    render(
+      <TableWright
+        rows={people}
+        columns={nameColumns}
+        pinnedRows={pinnedRows}
+        initialState={{
+          sorting: { sortModel: [{ field: 'name', sort: 'asc' }] },
+          filter: { filterModel: { items: [{ field: 'name', operator: 'equals', value: 'Ada' }] } },
+        }}
+      />,
+    );
+
+    expect(screen.getByText('Total')).toBeInTheDocument();
+    expect(screen.getByText('Avg')).toBeInTheDocument();
+    expect(screen.getByText('Ada')).toBeInTheDocument();
+    expect(screen.queryByText('Linus')).not.toBeInTheDocument();
+  });
+
+  it('does not make pinned rows selectable', () => {
+    render(
+      <TableWright rows={people} columns={nameColumns} pinnedRows={pinnedRows} checkboxSelection />,
+    );
+
+    expect(within(section('top')).queryByRole('checkbox')).not.toBeInTheDocument();
+    expect(screen.getAllByRole('checkbox', { name: 'Select row' })).toHaveLength(3);
+  });
+
+  it('shows a row from rows only once while pinned, and restores it when unpinned', () => {
+    const { rerender } = render(
+      <TableWright rows={people} columns={nameColumns} pinnedRows={{ top: [people[1]!] }} />,
+    );
+
+    expect(screen.getAllByText('Linus')).toHaveLength(1);
+    expect(within(section('top')).getByText('Linus')).toBeInTheDocument();
+
+    rerender(<TableWright rows={people} columns={nameColumns} pinnedRows={{}} />);
+
+    expect(section('top')).toBeNull();
+    expect(screen.getAllByText('Linus')).toHaveLength(1);
+    // Back at its original index, not appended at the end.
+    const names = screen.getAllByRole('row').map((row) => row.textContent);
+    expect(names.filter((name) => ['Ada', 'Linus', 'Grace'].includes(name ?? ''))).toEqual([
+      'Ada',
+      'Linus',
+      'Grace',
+    ]);
+  });
+
+  it('never gives pinned rows a detail panel toggle', () => {
+    render(
+      <TableWright
+        rows={people}
+        columns={nameColumns}
+        pinnedRows={pinnedRows}
+        getDetailPanelContent={getDetailPanelContent}
+      />,
+    );
+
+    expect(within(section('top')).queryByRole('button')).not.toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: 'Expand' })).toHaveLength(3);
   });
 });

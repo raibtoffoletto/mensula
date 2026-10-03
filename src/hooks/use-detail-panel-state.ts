@@ -66,11 +66,15 @@ const useDetailPanelState = ({
   const isControlled = detailPanelExpandedRowIds !== undefined;
   const expandedRowIds = detailPanelExpandedRowIds ?? uncontrolledIds;
 
+  // Pinned rows never get a panel (same as DataGridPro).
   const getRowParams = useCallback(
     (id: GridRowId): GridRowParams | null => {
       const api = apiRef.current;
       const row = api?.getRow(id);
-      return api && row ? { id, row, columns: api.getAllColumns() } : null;
+      if (!api || !row || api.getRowNode(id)?.type === 'pinnedRow') {
+        return null;
+      }
+      return { id, row, columns: api.getAllColumns() };
     },
     [apiRef],
   );

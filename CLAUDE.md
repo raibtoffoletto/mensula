@@ -17,6 +17,7 @@ Extension of `@mui/x-data-grid` (community) published as an ESM-only React compo
 - **Peer-dep model.** `react`, `react-dom`, `@mui/material`, `@mui/system`, `@mui/x-data-grid`, `@emotion/react`, `@emotion/styled` are peers — never bundle them.
 - `rolldownOptions.external` in `vite.config.ts` is derived from `peerDependencies` (subpaths included) — add a peer in `package.json` and it is externalized automatically.
 - The published `dist/` is the only shipped artifact (see `files` in `package.json`).
+- **MUI internals are quarantined.** Prefer public `@mui/x-data-grid` APIs. Where a Pro feature can only be rebuilt the way Pro does it (pipe processors, private `apiRef`, the virtualizer), import from `@mui/x-data-grid/internals` **only** in `src/components/pinning-sync.tsx` and `src/components/pinned-rows.tsx` (extend that list deliberately). Because internals carry no semver guarantee, the `@mui/x-data-grid` peer range is pinned to the tested minor (`~9.14.0`); bump it only after `yarn test` and the Storybook stories pass on the new minor.
 
 ## Layout
 

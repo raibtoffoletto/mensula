@@ -1,5 +1,8 @@
+import ColumnMenu from '@components/column-menu';
 import DetailPanelRow from '@components/detail-panel-row';
+import PinnedRows from '@components/pinned-rows';
 import useDetailPanelState, { type DetailPanelProps } from '@hooks/use-detail-panel-state';
+import usePinningState, { type PinningProps } from '@hooks/use-pinning-state';
 import {
   GRID_DETAIL_PANEL_TOGGLE_COL_DEF,
   GRID_DETAIL_PANEL_TOGGLE_FIELD,
@@ -9,17 +12,21 @@ import {
   useGridApiRef,
   type DataGridProps,
   type GridInitialState,
+  type GridPinnedColumnFields,
   type GridRowId,
 } from '@mui/x-data-grid';
 import DetailPanelProvider from '@providers/detail-panel';
+import PinningProvider from '@providers/pinning';
 import { useMemo } from 'react';
 
 export type TableWrightInitialState = GridInitialState & {
   detailPanel?: { expandedRowIds?: Set<GridRowId> };
+  pinnedColumns?: GridPinnedColumnFields;
 };
 
 export type TableWrightProps = Omit<DataGridProps, 'getDetailPanelContent' | 'initialState'> &
-  DetailPanelProps & {
+  DetailPanelProps &
+  PinningProps & {
     initialState?: TableWrightInitialState;
   };
 
@@ -28,15 +35,25 @@ const TableWright = ({
   getDetailPanelHeight,
   detailPanelExpandedRowIds,
   onDetailPanelExpandedRowIdsChange,
+  pinnedColumns,
+  onPinnedColumnsChange,
+  disableColumnPinning,
+  pinnedColumnsSectionSeparator = 'border-and-shadow',
+  pinnedRows,
+  pinnedRowsSectionSeparator = 'border-and-shadow',
   initialState: initialStateProp,
   ...props
 }: TableWrightProps) => {
-  const { detailPanel, ...initialState } = initialStateProp ?? {};
+  const {
+    detailPanel,
+    pinnedColumns: initialPinnedColumns,
+    ...initialState
+  } = initialStateProp ?? {};
   const internalApiRef = useGridApiRef();
   const apiRef = props.apiRef ?? internalApiRef;
   const hasDetailPanels = getDetailPanelContent !== undefined;
 
-  const { value, getRowSpacing } = useDetailPanelState({
+  const { value: detailPanelValue, getRowSpacing } = useDetailPanelState({
     apiRef,
     getDetailPanelContent,
     getDetailPanelHeight,
@@ -57,23 +74,43 @@ const TableWright = ({
     [hasDetailPanels, props.columns],
   );
 
-  const slots = useMemo(() => ({ ...props.slots, row: DetailPanelRow }), [props.slots]);
+  const pinningValue = usePinningState({
+    pinnedColumns,
+    onPinnedColumnsChange,
+    disableColumnPinning,
+    pinnedRows,
+    initialPinnedColumns,
+    columns,
+    getRowId: props.getRowId,
+  });
 
-  if (!hasDetailPanels) {
-    return <DataGrid {...props} apiRef={apiRef} initialState={initialState} />;
-  }
+  const slots = useMemo(
+    () => ({
+      columnMenu: ColumnMenu,
+      ...props.slots,
+      pinnedRows: PinnedRows,
+      ...(hasDetailPanels && { row: DetailPanelRow }),
+    }),
+    [hasDetailPanels, props.slots],
+  );
+
+  // The community props type omits Pro-only props the grid still reads at runtime.
+  const separators = { pinnedColumnsSectionSeparator, pinnedRowsSectionSeparator } as object;
 
   return (
-    <DetailPanelProvider value={value}>
-      <DataGrid
-        {...props}
-        apiRef={apiRef}
-        initialState={initialState}
-        columns={columns}
-        slots={slots}
-        getRowSpacing={getRowSpacing}
-      />
-    </DetailPanelProvider>
+    <PinningProvider value={pinningValue}>
+      <DetailPanelProvider value={detailPanelValue}>
+        <DataGrid
+          {...props}
+          {...separators}
+          apiRef={apiRef}
+          initialState={initialState}
+          columns={columns}
+          slots={slots}
+          getRowSpacing={hasDetailPanels ? getRowSpacing : props.getRowSpacing}
+        />
+      </DetailPanelProvider>
+    </PinningProvider>
   );
 };
 

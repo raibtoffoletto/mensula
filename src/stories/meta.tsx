@@ -1,13 +1,20 @@
 import TableWright, { type TableWrightProps } from '@components/table-wright';
 import { Box } from '@mui/material';
 import type { GridLoadingOverlayVariant } from '@mui/x-data-grid';
-import type { Meta } from '@storybook/react-vite';
+import type { Decorator, Meta } from '@storybook/react-vite';
 import { columns, rows } from './data';
 
 export type StoryArgs = TableWrightProps & {
   /** Story-only: overlay variant used while `loading` is true (with and without rows). */
   loadingVariant?: GridLoadingOverlayVariant;
 };
+
+/** Narrower than the columns, so there is something to scroll past pinned columns. */
+export const narrow: Decorator = (Story) => (
+  <Box sx={{ maxWidth: 720 }}>
+    <Story />
+  </Box>
+);
 
 /**
  * Defaults shared by every feature file. Each file spreads this and adds its own `title`

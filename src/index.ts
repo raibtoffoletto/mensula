@@ -1,5 +1,11 @@
 export { default as TableWright } from '@components/table-wright';
 export type { TableWrightInitialState, TableWrightProps } from '@components/table-wright';
+export { default as TableWrightColumnMenu } from '@components/column-menu';
+export { default as ColumnMenuPinningItem } from '@components/column-menu-pinning-item';
+export { default as useColumnPinning } from '@hooks/use-column-pinning';
+export type { ColumnPinningApi, PinnedRowsProp } from '@contexts/pinning';
+export type { PinningProps } from '@hooks/use-pinning-state';
+export { PinnedColumnSide, PinnedRowPosition } from '@lib/constants';
 export { default as useDetailPanel } from '@hooks/use-detail-panel';
 export type { DetailPanelApi } from '@contexts/detail-panel';
 export type { DetailPanelProps } from '@hooks/use-detail-panel-state';
