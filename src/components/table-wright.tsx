@@ -1,12 +1,14 @@
 import ColumnMenu from '@components/column-menu';
 import ColumnsManagement from '@components/columns-management';
 import DetailPanelRow from '@components/detail-panel-row';
+import FilterPanel from '@components/filter-panel';
 import PinnedRows from '@components/pinned-rows';
 import RowContextMenu from '@components/row-context-menu';
 import useColumnHeaderContextMenu from '@hooks/use-column-header-context-menu';
 import useColumnHeaderReorder from '@hooks/use-column-header-reorder';
 import useColumnOrderState, { type ColumnReorderProps } from '@hooks/use-column-order-state';
 import useDetailPanelState, { type DetailPanelProps } from '@hooks/use-detail-panel-state';
+import useMultiFilterProps, { type FilteringProps } from '@hooks/use-multi-filter-props';
 import usePinningState, { type PinningProps } from '@hooks/use-pinning-state';
 import useRowHighlightOnShiftClick from '@hooks/use-row-highlight-on-shift-click';
 import useRowHighlightState, { type RowHighlightProps } from '@hooks/use-row-highlight-state';
@@ -31,6 +33,7 @@ import {
 } from '@mui/x-data-grid';
 import ColumnOrderProvider from '@providers/column-order';
 import DetailPanelProvider from '@providers/detail-panel';
+import FilteringProvider from '@providers/filtering';
 import PinningProvider from '@providers/pinning';
 import RowHighlightProvider from '@providers/row-highlight';
 import { useMemo } from 'react';
@@ -52,6 +55,7 @@ export type TableWrightProps = Omit<
   DetailPanelProps &
   PinningProps &
   ColumnReorderProps &
+  FilteringProps &
   RowHighlightProps & {
     initialState?: TableWrightInitialState;
     /**
@@ -110,6 +114,7 @@ const TableWright = ({
   highlightedRowIds,
   onHighlightedRowIdsChange,
   disableRowHighlightOnShiftClick = false,
+  disableMultipleColumnsFiltering = false,
   showRowMenu = false,
   disableContextMenu = false,
   hideColumnMenu = false,
@@ -173,6 +178,19 @@ const TableWright = ({
     disableRowHighlightOnShiftClick,
   );
 
+  const filterProps = useMultiFilterProps({
+    apiRef,
+    filterModel: props.filterModel,
+    onFilterModelChange: props.onFilterModelChange,
+    initialFilterModel: initialState.filter?.filterModel,
+    disableMultipleColumnsFiltering,
+  });
+
+  const filteringValue = useMemo(
+    () => ({ disableMultipleColumnsFiltering }),
+    [disableMultipleColumnsFiltering],
+  );
+
   const columnOrderValue = useColumnOrderState({
     apiRef,
     columns,
@@ -196,11 +214,12 @@ const TableWright = ({
     () => ({
       columnMenu: ColumnMenu,
       columnsManagement: ColumnsManagement,
+      ...(!disableMultipleColumnsFiltering && { filterPanel: FilterPanel }),
       ...props.slots,
       pinnedRows: PinnedRows,
       ...(hasDetailPanels && { row: DetailPanelRow }),
     }),
-    [hasDetailPanels, props.slots],
+    [disableMultipleColumnsFiltering, hasDetailPanels, props.slots],
   );
 
   // The community props type omits Pro-only props the grid still reads at runtime.
@@ -220,17 +239,26 @@ const TableWright = ({
       <ColumnOrderProvider value={columnOrderValue}>
         <DetailPanelProvider value={detailPanelValue}>
           <RowHighlightProvider value={rowHighlightValue}>
-            <DataGrid
-              {...props}
-              {...separators}
-              apiRef={apiRef}
-              initialState={initialState}
-              columns={columns}
-              slots={slots}
-              sx={sx}
-              getRowClassName={getRowClassName}
-              getRowSpacing={hasDetailPanels ? getRowSpacing : props.getRowSpacing}
-            />
+            <FilteringProvider value={filteringValue}>
+              <DataGrid
+                {...props}
+                {...separators}
+                apiRef={apiRef}
+                initialState={{
+                  ...initialState,
+                  ...(initialState.filter && {
+                    filter: { ...initialState.filter, filterModel: filterProps.initialFilterModel },
+                  }),
+                }}
+                filterModel={filterProps.filterModel}
+                onFilterModelChange={filterProps.onFilterModelChange}
+                columns={columns}
+                slots={slots}
+                sx={sx}
+                getRowClassName={getRowClassName}
+                getRowSpacing={hasDetailPanels ? getRowSpacing : props.getRowSpacing}
+              />
+            </FilteringProvider>
             <RowContextMenu apiRef={apiRef} text={rowMenuText} disabled={disableContextMenu} />
           </RowHighlightProvider>
         </DetailPanelProvider>

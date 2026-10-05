@@ -29,3 +29,4 @@ export { default as useRowHighlight } from '@hooks/use-row-highlight';
 export type { RowHighlightApi } from '@contexts/row-highlight';
 export type { RowHighlightProps } from '@hooks/use-row-highlight-state';
 export { GRID_ROW_MENU_COL_DEF, GRID_ROW_MENU_FIELD } from '@lib/row-menu';
+export type { FilteringProps } from '@hooks/use-multi-filter-props';

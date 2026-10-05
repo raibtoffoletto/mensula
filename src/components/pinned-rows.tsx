@@ -1,3 +1,4 @@
+import MultiFilterSync from '@components/multi-filter-sync';
 import PinningSync from '@components/pinning-sync';
 import { PinnedRowPosition } from '@lib/constants';
 import {
@@ -15,7 +16,8 @@ import {
 /**
  * `pinnedRows` slot. The community grid already renders it at the top and bottom of the scroll
  * area (sticky) but ships an empty component; this one asks the grid's virtualizer to lay the
- * pinned rows out, exactly like DataGridPro. The top instance also hosts `PinningSync`.
+ * pinned rows out, exactly like DataGridPro. The top instance also hosts `PinningSync` and
+ * `MultiFilterSync`, as it is always mounted.
  */
 const PinnedRows = ({ position }: GridPinnedRowsProps) => {
   const apiRef = useGridPrivateApiContext();
@@ -45,7 +47,12 @@ const PinnedRows = ({ position }: GridPinnedRowsProps) => {
 
   return (
     <>
-      {position === PinnedRowPosition.Top && <PinningSync />}
+      {position === PinnedRowPosition.Top && (
+        <>
+          <PinningSync />
+          <MultiFilterSync />
+        </>
+      )}
       {elements && (
         <div
           className={`${gridClasses.pinnedRows} ${gridClasses[`pinnedRows--${position}`]}`}

@@ -9,8 +9,8 @@ import {
   type GridTreeNode,
   type GridValidRowModel,
 } from '@mui/x-data-grid';
-// Internals are quarantined to this file and `pinned-rows.tsx` (plus `vars` in the columns panel):
-// they are the hooks DataGridPro uses for the same features. The x-data-grid peer range is pinned
+// Internals are quarantined to this file, `pinned-rows.tsx` and `multi-filter-sync.tsx` (plus `vars`
+// in the columns panel): they are the hooks DataGridPro uses for the same features. The x-data-grid peer range is pinned
 // to the tested minor.
 import {
   useGridPrivateApiContext,

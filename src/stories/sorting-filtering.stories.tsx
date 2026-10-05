@@ -34,3 +34,21 @@ export const NoFilterResults: Story = {
     },
   },
 };
+
+/** Several filters at once, as in DataGridPro: open the filter panel and use "Add filter". */
+export const MultipleFilters: Story = {
+  args: {
+    showToolbar: true,
+    initialState: {
+      pagination: { paginationModel: { pageSize: 10, page: 0 } },
+      filter: {
+        filterModel: {
+          items: [
+            { id: 1, field: 'department', operator: 'is', value: 'Engineering' },
+            { id: 2, field: 'age', operator: '>', value: 50 },
+          ],
+        },
+      },
+    },
+  },
+};
