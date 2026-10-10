@@ -53,6 +53,62 @@ export default function Example() {
 
 Props extend `DataGridProps` from `@mui/x-data-grid` — anything the community `DataGrid` accepts is accepted here.
 
+## Toolbar
+
+`showToolbar` renders `TableWrightToolbar`: an always-open search field, the grid `label`, and text buttons for filters, columns and CSV export. Below the theme's `md` breakpoint the toolbar goes compact: the search collapses behind a search button (expanding on click, or while it holds a value) and the buttons become icon buttons with their labels as tooltips. Printing is not offered. Configure it through `slotProps.toolbar` with the grid's usual toolbar options (`showQuickFilter`, `quickFilterProps`, `csvOptions`).
+
+### Building your own
+
+Give `TableWrightToolbar` children and they replace the default layout. Hand the result to the grid as the `toolbar` slot:
+
+```tsx
+import {
+  TableWright,
+  TableWrightToolbar,
+  ToolbarExportCsv,
+  ToolbarGroup,
+  ToolbarLabel,
+  ToolbarSearch,
+} from 'tablewright';
+import Button from '@mui/material/Button';
+
+const MyToolbar = () => (
+  <TableWrightToolbar>
+    <ToolbarSearch debounceMs={500} />
+    <ToolbarLabel />
+    <ToolbarGroup>
+      <ToolbarExportCsv options={{ fileName: 'pioneers' }} />
+      <Button>Add pioneer</Button>
+    </ToolbarGroup>
+  </TableWrightToolbar>
+);
+
+<TableWright rows={rows} columns={columns} showToolbar slots={{ toolbar: MyToolbar }} />;
+```
+
+| Drop-in                | Renders                                            | Props                                                           | Hidden when                         |
+| ---------------------- | -------------------------------------------------- | --------------------------------------------------------------- | ----------------------------------- |
+| `ToolbarSearch`        | Always-open quick filter, with a clear button      | Same as `quickFilterProps` (parser, formatter, debounce, field) | —                                   |
+| `ToolbarLabel`         | The grid's `label`, or its children in its place   | `children`                                                      | —                                   |
+| `ToolbarGroup`         | A flex row to keep items together                  | Any `<div>` prop, `sx`                                          | —                                   |
+| `ToolbarFiltersButton` | Opens the filter panel; a dot marks active filters | —                                                               | `disableColumnFilter` on the grid   |
+| `ToolbarColumnsButton` | Opens the columns panel                            | —                                                               | `disableColumnSelector` on the grid |
+| `ToolbarExportCsv`     | Downloads a CSV in one click                       | `options` (same as `csvOptions`)                                | `options.disableToolbarButton`      |
+
+Children skip the default layout, so `showQuickFilter`, `quickFilterProps` and `csvOptions` from `slotProps.toolbar` no longer apply. Pass those options to the drop-ins instead. Any other element can sit next to the drop-ins.
+
+### Styling the toolbar
+
+`sx`, `className`, `style` and other `<div>` attributes reach the toolbar root in both modes. `sx` layers over the default `justifyContent: 'space-between'` and muted text color, and takes the object, function or array form.
+
+```tsx
+// Default layout
+<TableWright showToolbar slotProps={{ toolbar: { sx: { px: 2, bgcolor: 'grey.100' } } }} />
+
+// Your own layout
+<TableWrightToolbar sx={{ justifyContent: 'flex-start', gap: 2 }}>…</TableWrightToolbar>
+```
+
 ## Development
 
 Node 22+ and Yarn 1 (Classic).

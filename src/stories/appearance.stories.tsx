@@ -25,10 +25,6 @@ export const Comfortable: Story = {
 
 // Chrome
 
-export const WithToolbar: Story = {
-  args: { showToolbar: true, label: 'Computing pioneers' },
-};
-
 export const VerticalBorders: Story = {
   args: { showCellVerticalBorder: true, showColumnVerticalBorder: true },
 };

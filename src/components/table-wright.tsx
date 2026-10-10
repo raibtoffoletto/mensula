@@ -4,6 +4,7 @@ import DetailPanelRow from '@components/detail-panel-row';
 import FilterPanel from '@components/filter-panel';
 import PinnedRows from '@components/pinned-rows';
 import RowContextMenu from '@components/row-context-menu';
+import Toolbar from '@components/toolbar';
 import useColumnHeaderContextMenu from '@hooks/use-column-header-context-menu';
 import useColumnHeaderReorder from '@hooks/use-column-header-reorder';
 import useColumnOrderState, { type ColumnReorderProps } from '@hooks/use-column-order-state';
@@ -214,6 +215,7 @@ const TableWright = ({
     () => ({
       columnMenu: ColumnMenu,
       columnsManagement: ColumnsManagement,
+      toolbar: Toolbar,
       ...(!disableMultipleColumnsFiltering && { filterPanel: FilterPanel }),
       ...props.slots,
       pinnedRows: PinnedRows,
