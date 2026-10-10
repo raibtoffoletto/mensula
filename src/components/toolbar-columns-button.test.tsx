@@ -1,4 +1,4 @@
-import TableWright from '@components/table-wright';
+import Mensula from '@components/mensula';
 import Toolbar from '@components/toolbar';
 import ToolbarColumnsButton from '@components/toolbar-columns-button';
 import { render, screen } from '@testing-library/react';
@@ -23,7 +23,7 @@ describe('ToolbarColumnsButton', () => {
   it('opens the columns panel', async () => {
     const user = userEvent.setup();
     render(
-      <TableWright rows={rows} columns={columns} showToolbar slots={{ toolbar: ColumnsToolbar }} />,
+      <Mensula rows={rows} columns={columns} showToolbar slots={{ toolbar: ColumnsToolbar }} />,
     );
 
     await user.click(screen.getByRole('button', { name: 'Columns' }));
@@ -33,7 +33,7 @@ describe('ToolbarColumnsButton', () => {
 
   it('hides when the grid disables the column selector', () => {
     render(
-      <TableWright
+      <Mensula
         rows={rows}
         columns={columns}
         showToolbar
@@ -49,7 +49,7 @@ describe('ToolbarColumnsButton', () => {
     mockNarrowViewport();
     const user = userEvent.setup();
     render(
-      <TableWright rows={rows} columns={columns} showToolbar slots={{ toolbar: ColumnsToolbar }} />,
+      <Mensula rows={rows} columns={columns} showToolbar slots={{ toolbar: ColumnsToolbar }} />,
     );
 
     const button = screen.getByRole('button', { name: 'Columns' });

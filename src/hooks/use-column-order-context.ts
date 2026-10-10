@@ -5,7 +5,7 @@ import { useContext } from 'react';
 const useColumnOrderContext = () => {
   const context = useContext(ColumnOrderContext);
   if (!context) {
-    throw new Error('tablewright: column reorder hooks must be used inside a TableWright.');
+    throw new Error('mensula: column reorder hooks must be used inside a Mensula.');
   }
   return context;
 };

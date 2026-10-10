@@ -1,4 +1,4 @@
-import TableWright from '@components/table-wright';
+import Mensula from '@components/mensula';
 import Toolbar from '@components/toolbar';
 import ToolbarLabel from '@components/toolbar-label';
 import { render, screen } from '@testing-library/react';
@@ -10,7 +10,7 @@ const rows = [{ id: 1, name: 'Ada' }];
 
 const renderLabel = (children?: ReactNode) =>
   render(
-    <TableWright
+    <Mensula
       rows={rows}
       columns={columns}
       showToolbar

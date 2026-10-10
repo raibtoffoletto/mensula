@@ -1,4 +1,4 @@
-import TableWright from '@components/table-wright';
+import Mensula from '@components/mensula';
 import useDetailPanel from '@hooks/use-detail-panel';
 import { GRID_DETAIL_PANEL_TOGGLE_COL_DEF } from '@lib/detail-panel';
 import { Box, Button, Stack, Typography } from '@mui/material';
@@ -46,7 +46,7 @@ const renderProjects = ({ row }: GridRowParams<Person>) => (
     <Typography variant="subtitle2" gutterBottom>
       Projects of {row.firstName} {row.lastName}
     </Typography>
-    <TableWright
+    <Mensula
       rows={makeProjects(row)}
       columns={projectColumns}
       density="compact"
@@ -83,8 +83,8 @@ const columnsWithTrailingToggle: GridColDef<Person>[] = [
 
 const meta = {
   ...baseMeta,
-  title: 'TableWright/Master detail',
-  component: TableWright,
+  title: 'Mensula/Master detail',
+  component: Mensula,
 } satisfies Meta<StoryArgs>;
 
 export default meta;

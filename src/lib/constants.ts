@@ -13,7 +13,7 @@ export const PinnedRowPosition = {
 export type PinnedRowPosition = (typeof PinnedRowPosition)[keyof typeof PinnedRowPosition];
 
 /** Class added to highlighted rows; style it through the grid's `sx` to change the look. */
-export const ROW_HIGHLIGHTED_CLASS = 'TableWright-row--highlighted';
+export const ROW_HIGHLIGHTED_CLASS = 'Mensula-row--highlighted';
 
 /** Right-clicks on these keep the browser's context menu (copy, paste, spell check). */
 export const CONTEXT_MENU_IGNORED_SELECTOR =

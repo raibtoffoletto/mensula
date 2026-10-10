@@ -5,7 +5,7 @@ import { useContext } from 'react';
 const useRowHighlight = () => {
   const context = useContext(RowHighlightContext);
   if (!context) {
-    throw new Error('tablewright: row highlight hooks must be used inside a TableWright.');
+    throw new Error('mensula: row highlight hooks must be used inside a Mensula.');
   }
   return context;
 };

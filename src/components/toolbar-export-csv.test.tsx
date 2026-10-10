@@ -1,4 +1,4 @@
-import TableWright from '@components/table-wright';
+import Mensula from '@components/mensula';
 import Toolbar from '@components/toolbar';
 import ToolbarExportCsv, { type ToolbarExportCsvProps } from '@components/toolbar-export-csv';
 import { render, screen } from '@testing-library/react';
@@ -17,7 +17,7 @@ const rows = [
 
 const renderExport = (props: ToolbarExportCsvProps = {}) =>
   render(
-    <TableWright
+    <Mensula
       rows={rows}
       columns={columns}
       showToolbar

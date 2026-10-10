@@ -1,4 +1,4 @@
-import TableWright from '@components/table-wright';
+import Mensula from '@components/mensula';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { baseMeta, type StoryArgs } from './meta';
 import { columns } from './data';
@@ -9,8 +9,8 @@ const editableColumns = columns.map((column) =>
 
 const meta = {
   ...baseMeta,
-  title: 'TableWright/Editing',
-  component: TableWright,
+  title: 'Mensula/Editing',
+  component: Mensula,
 } satisfies Meta<StoryArgs>;
 
 export default meta;

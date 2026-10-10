@@ -1,4 +1,4 @@
-import TableWright from '@components/table-wright';
+import Mensula from '@components/mensula';
 import type { GridColumnGroupingModel } from '@mui/x-data-grid';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { baseMeta, type StoryArgs } from './meta';
@@ -30,8 +30,8 @@ const columnGroupingModel: GridColumnGroupingModel = [
 
 const meta = {
   ...baseMeta,
-  title: 'TableWright/Columns',
-  component: TableWright,
+  title: 'Mensula/Columns',
+  component: Mensula,
 } satisfies Meta<StoryArgs>;
 
 export default meta;

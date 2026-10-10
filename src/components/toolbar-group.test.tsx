@@ -1,4 +1,4 @@
-import TableWright from '@components/table-wright';
+import Mensula from '@components/mensula';
 import Toolbar from '@components/toolbar';
 import ToolbarGroup from '@components/toolbar-group';
 import { render, screen, within } from '@testing-library/react';
@@ -10,7 +10,7 @@ const rows = [{ id: 1, name: 'Ada' }];
 describe('ToolbarGroup', () => {
   it('renders its children in the toolbar', () => {
     render(
-      <TableWright
+      <Mensula
         rows={rows}
         columns={columns}
         showToolbar

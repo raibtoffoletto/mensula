@@ -6,7 +6,7 @@ const useDetailPanelContext = () => {
   const context = useContext(DetailPanelContext);
   if (!context) {
     throw new Error(
-      'tablewright: detail panel hooks must be used inside a TableWright with `getDetailPanelContent`.',
+      'mensula: detail panel hooks must be used inside a Mensula with `getDetailPanelContent`.',
     );
   }
   return context;

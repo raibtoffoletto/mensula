@@ -1,4 +1,4 @@
-import TableWright from '@components/table-wright';
+import Mensula from '@components/mensula';
 import Toolbar from '@components/toolbar';
 import ToolbarFiltersButton from '@components/toolbar-filters-button';
 import { render, screen } from '@testing-library/react';
@@ -23,7 +23,7 @@ describe('ToolbarFiltersButton', () => {
   it('opens the filter panel', async () => {
     const user = userEvent.setup();
     render(
-      <TableWright rows={rows} columns={columns} showToolbar slots={{ toolbar: FiltersToolbar }} />,
+      <Mensula rows={rows} columns={columns} showToolbar slots={{ toolbar: FiltersToolbar }} />,
     );
 
     await user.click(screen.getByRole('button', { name: 'Filters' }));
@@ -33,7 +33,7 @@ describe('ToolbarFiltersButton', () => {
 
   it('hides when the grid disables column filtering', () => {
     render(
-      <TableWright
+      <Mensula
         rows={rows}
         columns={columns}
         showToolbar
@@ -49,7 +49,7 @@ describe('ToolbarFiltersButton', () => {
     mockNarrowViewport();
     const user = userEvent.setup();
     render(
-      <TableWright rows={rows} columns={columns} showToolbar slots={{ toolbar: FiltersToolbar }} />,
+      <Mensula rows={rows} columns={columns} showToolbar slots={{ toolbar: FiltersToolbar }} />,
     );
 
     const button = screen.getByRole('button', { name: 'Filters' });

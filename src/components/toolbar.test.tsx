@@ -1,4 +1,4 @@
-import TableWright from '@components/table-wright';
+import Mensula from '@components/mensula';
 import Toolbar from '@components/toolbar';
 import ToolbarExportCsv from '@components/toolbar-export-csv';
 import ToolbarSearch from '@components/toolbar-search';
@@ -16,7 +16,7 @@ const rows = [
 
 describe('Toolbar', () => {
   it('shows the label and the controls', () => {
-    render(<TableWright rows={rows} columns={columns} showToolbar label="Pioneers" />);
+    render(<Mensula rows={rows} columns={columns} showToolbar label="Pioneers" />);
 
     expect(screen.getByText('Pioneers')).toHaveClass('MuiDataGrid-toolbarLabel');
     expect(screen.getByRole('toolbar', { name: 'Pioneers' })).toBeInTheDocument();
@@ -28,7 +28,7 @@ describe('Toolbar', () => {
 
   it('drops the controls the grid disables', () => {
     render(
-      <TableWright
+      <Mensula
         rows={rows}
         columns={columns}
         showToolbar
@@ -48,7 +48,7 @@ describe('Toolbar', () => {
 
   it('yields to a consumer toolbar slot', () => {
     render(
-      <TableWright
+      <Mensula
         rows={rows}
         columns={columns}
         showToolbar
@@ -68,7 +68,7 @@ describe('Toolbar', () => {
       </Toolbar>
     );
     render(
-      <TableWright
+      <Mensula
         rows={rows}
         columns={columns}
         showToolbar
@@ -90,7 +90,7 @@ describe('Toolbar', () => {
 
   it('passes styling props from the slot props to the toolbar root', () => {
     render(
-      <TableWright
+      <Mensula
         rows={rows}
         columns={columns}
         showToolbar
@@ -109,7 +109,7 @@ describe('Toolbar', () => {
 
   it('passes styling props on a custom composition to the toolbar root', () => {
     render(
-      <TableWright
+      <Mensula
         rows={rows}
         columns={columns}
         showToolbar

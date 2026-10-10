@@ -1,4 +1,4 @@
-import TableWright from '@components/table-wright';
+import Mensula from '@components/mensula';
 import { Alert, Box } from '@mui/material';
 import type { GridColumnOrderChangeParams } from '@mui/x-data-grid';
 import type { Meta, StoryObj } from '@storybook/react-vite';
@@ -8,8 +8,8 @@ import { baseMeta, narrow, type StoryArgs } from './meta';
 
 const meta = {
   ...baseMeta,
-  title: 'TableWright/Column reordering',
-  component: TableWright,
+  title: 'Mensula/Column reordering',
+  component: Mensula,
   args: {
     ...baseMeta.args,
     showToolbar: true,
@@ -79,7 +79,7 @@ const OrderLog = (args: StoryArgs) => {
         </code>
       </Alert>
       <Box sx={{ height: 520 }}>
-        <TableWright {...args} onColumnOrderChange={setLast} />
+        <Mensula {...args} onColumnOrderChange={setLast} />
       </Box>
     </>
   );

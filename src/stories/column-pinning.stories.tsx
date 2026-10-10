@@ -1,4 +1,4 @@
-import TableWright from '@components/table-wright';
+import Mensula from '@components/mensula';
 import { Alert, Box } from '@mui/material';
 import type { GridPinnedColumnFields } from '@mui/x-data-grid';
 import type { Meta, StoryObj } from '@storybook/react-vite';
@@ -7,8 +7,8 @@ import { baseMeta, narrow, type StoryArgs } from './meta';
 
 const meta = {
   ...baseMeta,
-  title: 'TableWright/Column pinning',
-  component: TableWright,
+  title: 'Mensula/Column pinning',
+  component: Mensula,
   args: {
     ...baseMeta.args,
     pinnedColumnsSectionSeparator: 'border-and-shadow',
@@ -76,7 +76,7 @@ const ControlledPinning = (args: StoryArgs) => {
         <code>pinnedColumns: {JSON.stringify(pinnedColumns)}</code>
       </Alert>
       <Box sx={{ height: 520 }}>
-        <TableWright
+        <Mensula
           {...args}
           pinnedColumns={pinnedColumns}
           onPinnedColumnsChange={setPinnedColumns}

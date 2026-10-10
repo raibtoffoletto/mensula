@@ -2,10 +2,10 @@ import type { GridColDef, GridFilterItem, GridFilterModel } from '@mui/x-data-gr
 
 let lastFilterItemId = 0;
 
-/** Ids for the filter items TableWright creates. Once there are several, each needs one. */
+/** Ids for the filter items Mensula creates. Once there are several, each needs one. */
 export const createFilterItemId = () => {
   lastFilterItemId += 1;
-  return `tablewright-filter-${lastFilterItemId}`;
+  return `mensula-filter-${lastFilterItemId}`;
 };
 
 export const hasSeveralFilterItems = (model: GridFilterModel | undefined) =>

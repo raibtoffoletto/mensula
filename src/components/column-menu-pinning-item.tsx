@@ -6,7 +6,7 @@ import type { MouseEvent, ReactNode } from 'react';
 
 /**
  * Column menu item with "Pin to left" / "Pin to right" / "Unpin", in DataGridPro's order.
- * Included in TableWright's default column menu; add it to a custom menu as
+ * Included in Mensula's default column menu; add it to a custom menu as
  * `slots={{ columnMenuPinningItem: ColumnMenuPinningItem }}`.
  */
 const ColumnMenuPinningItem = ({ colDef, onClick }: GridColumnMenuItemProps) => {

@@ -1,5 +1,5 @@
 /** Class on the floating copy, for tests and consumer styling. */
-export const DRAG_PREVIEW_CLASS = 'TableWright-dragPreview';
+export const DRAG_PREVIEW_CLASS = 'Mensula-dragPreview';
 /** How long the copy takes to settle onto the dropped element. */
 export const DROP_ANIMATION_MS = 150;
 /** Opacity of the dragged element while its copy is under the pointer. */

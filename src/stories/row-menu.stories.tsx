@@ -1,4 +1,4 @@
-import TableWright from '@components/table-wright';
+import Mensula from '@components/mensula';
 import type { PinnedRowsProp } from '@contexts/pinning';
 import { Box, Typography } from '@mui/material';
 import type { GridRowId } from '@mui/x-data-grid';
@@ -9,8 +9,8 @@ import { baseMeta, narrow, type StoryArgs } from './meta';
 
 const meta = {
   ...baseMeta,
-  title: 'TableWright/Row menu',
-  component: TableWright,
+  title: 'Mensula/Row menu',
+  component: Mensula,
   args: {
     ...baseMeta.args,
     showRowMenu: true,
@@ -48,10 +48,10 @@ export const WithPinnedColumns: Story = {
   decorators: [narrow],
 };
 
-/** Recolor highlights by overriding `--TableWright-highlightColor` through `sx`. */
+/** Recolor highlights by overriding `--Mensula-highlightColor` through `sx`. */
 export const CustomHighlightColor: Story = {
   args: {
-    sx: { '--TableWright-highlightColor': (theme) => theme.palette.info.main },
+    sx: { '--Mensula-highlightColor': (theme) => theme.palette.info.main },
     initialState: {
       ...meta.args.initialState,
       highlightedRowIds: new Set<GridRowId>([2, 3, 5]),
@@ -71,7 +71,7 @@ const Controlled = (args: StoryArgs) => {
         {[...highlightedRowIds].join(', ') || 'none'}
       </Typography>
       <Box sx={{ height: 520 }}>
-        <TableWright
+        <Mensula
           {...args}
           pinnedRows={pinnedRows}
           onPinnedRowsChange={setPinnedRows}

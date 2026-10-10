@@ -1,4 +1,4 @@
-import TableWright from '@components/table-wright';
+import Mensula from '@components/mensula';
 import Toolbar from '@components/toolbar';
 import ToolbarSearch, { type ToolbarSearchProps } from '@components/toolbar-search';
 import { render, screen, waitFor } from '@testing-library/react';
@@ -17,7 +17,7 @@ const rows = [
 
 const renderSearch = (props: ToolbarSearchProps = {}) =>
   render(
-    <TableWright
+    <Mensula
       rows={rows}
       columns={columns}
       showToolbar

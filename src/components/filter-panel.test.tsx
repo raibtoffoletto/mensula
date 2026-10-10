@@ -1,4 +1,4 @@
-import TableWright from '@components/table-wright';
+import Mensula from '@components/mensula';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
@@ -20,7 +20,7 @@ const filterForms = () => document.querySelectorAll('.MuiDataGrid-filterForm');
 describe('FilterPanel', () => {
   it('adds a filter, keeping the placeholder one', async () => {
     const user = userEvent.setup();
-    render(<TableWright rows={rows} columns={columns} showToolbar />);
+    render(<Mensula rows={rows} columns={columns} showToolbar />);
 
     await user.click(screen.getByRole('button', { name: 'Filters' }));
     expect(filterForms()).toHaveLength(1);
@@ -34,7 +34,7 @@ describe('FilterPanel', () => {
   it('shows every filter and removes them all', async () => {
     const user = userEvent.setup();
     render(
-      <TableWright
+      <Mensula
         rows={rows}
         columns={columns}
         showToolbar
@@ -52,7 +52,7 @@ describe('FilterPanel', () => {
   it('honors disableAddFilterButton and disableRemoveAllButton', async () => {
     const user = userEvent.setup();
     render(
-      <TableWright
+      <Mensula
         rows={rows}
         columns={columns}
         showToolbar
@@ -69,7 +69,7 @@ describe('FilterPanel', () => {
   it('keeps the stock panel with disableMultipleColumnsFiltering', async () => {
     const user = userEvent.setup();
     render(
-      <TableWright rows={rows} columns={columns} showToolbar disableMultipleColumnsFiltering />,
+      <Mensula rows={rows} columns={columns} showToolbar disableMultipleColumnsFiltering />,
     );
 
     await user.click(screen.getByRole('button', { name: 'Filters' }));

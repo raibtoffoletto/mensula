@@ -2,7 +2,7 @@ import { DRAG_PREVIEW_CLASS } from '@lib/drag-preview';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import TableWright, { type TableWrightProps } from './table-wright';
+import Mensula, { type MensulaProps } from './mensula';
 
 const rows = [{ id: 1, name: 'Ada', role: 'Engineer', city: 'London' }];
 const columns = [
@@ -15,9 +15,9 @@ const columns = [
 const headerFields = () =>
   screen.getAllByRole('columnheader').map((header) => header.getAttribute('data-field'));
 
-const openPanel = async (props: Partial<TableWrightProps> = {}) => {
+const openPanel = async (props: Partial<MensulaProps> = {}) => {
   const user = userEvent.setup();
-  render(<TableWright rows={rows} columns={columns} showToolbar {...props} />);
+  render(<Mensula rows={rows} columns={columns} showToolbar {...props} />);
   await user.click(screen.getByRole('button', { name: 'Columns' }));
   return { user, panel: await screen.findByRole('tooltip') };
 };

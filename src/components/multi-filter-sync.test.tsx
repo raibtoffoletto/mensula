@@ -1,4 +1,4 @@
-import TableWright from '@components/table-wright';
+import Mensula from '@components/mensula';
 import { GridLogicOperator, type GridApi, type GridFilterModel } from '@mui/x-data-grid';
 import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -32,7 +32,7 @@ let gridApi: RefObject<GridApi | null> = { current: null };
 const renderWithApiRef = (initialState?: { filter: { filterModel: GridFilterModel } }) => {
   gridApi = { current: null };
   return render(
-    <TableWright apiRef={gridApi} rows={rows} columns={columns} initialState={initialState} />,
+    <Mensula apiRef={gridApi} rows={rows} columns={columns} initialState={initialState} />,
   );
 };
 const api = () => gridApi.current!;
@@ -45,7 +45,7 @@ describe('MultiFilterSync', () => {
   it('applies every item of the initial model, combined with AND', () => {
     const error = vi.spyOn(console, 'error');
     render(
-      <TableWright
+      <Mensula
         rows={rows}
         columns={columns}
         initialState={{ filter: { filterModel: { items: [engineers, over50] } } }}
@@ -58,7 +58,7 @@ describe('MultiFilterSync', () => {
 
   it('combines items with OR', () => {
     render(
-      <TableWright
+      <Mensula
         rows={rows}
         columns={columns}
         initialState={{
@@ -75,7 +75,7 @@ describe('MultiFilterSync', () => {
   it('ignores unfinished items under OR', () => {
     const unfinished = { id: 3, field: 'name', operator: 'contains' };
     render(
-      <TableWright
+      <Mensula
         rows={rows}
         columns={columns}
         filterModel={{ items: [engineers, unfinished], logicOperator: GridLogicOperator.Or }}
@@ -87,7 +87,7 @@ describe('MultiFilterSync', () => {
 
   it('applies the quick filter on top of the items', () => {
     render(
-      <TableWright
+      <Mensula
         rows={rows}
         columns={columns}
         filterModel={{
@@ -105,7 +105,7 @@ describe('MultiFilterSync', () => {
   it('follows a controlled model without reporting the initial hand-over', () => {
     const onChange = vi.fn();
     const { rerender } = render(
-      <TableWright
+      <Mensula
         rows={rows}
         columns={columns}
         filterModel={{ items: [engineers, over50] }}
@@ -115,7 +115,7 @@ describe('MultiFilterSync', () => {
     expect(visibleNames()).toEqual(['Linus']);
 
     rerender(
-      <TableWright
+      <Mensula
         rows={rows}
         columns={columns}
         filterModel={{ items: [over50] }}
@@ -182,7 +182,7 @@ describe('MultiFilterSync', () => {
   it('keeps the single-filter behavior with disableMultipleColumnsFiltering', () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
     render(
-      <TableWright
+      <Mensula
         rows={rows}
         columns={columns}
         disableMultipleColumnsFiltering

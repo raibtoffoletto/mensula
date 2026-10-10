@@ -5,7 +5,7 @@ import { useContext } from 'react';
 const usePinningContext = () => {
   const context = useContext(PinningContext);
   if (!context) {
-    throw new Error('tablewright: pinning hooks must be used inside a TableWright.');
+    throw new Error('mensula: pinning hooks must be used inside a Mensula.');
   }
   return context;
 };

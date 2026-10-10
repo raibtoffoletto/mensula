@@ -24,7 +24,7 @@ import {
  *
  * Styling props (`sx`, `className`, `style`) and other `<div>` attributes reach the toolbar root
  * in both modes; `sx` layers over the default `justifyContent` and `color`. Set them through
- * `slotProps.toolbar` for the default layout, or directly on `TableWrightToolbar` in your own.
+ * `slotProps.toolbar` for the default layout, or directly on `MensulaToolbar` in your own.
  */
 const Toolbar = ({
   showQuickFilter = true,

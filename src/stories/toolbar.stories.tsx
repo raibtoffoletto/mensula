@@ -1,4 +1,4 @@
-import TableWright from '@components/table-wright';
+import Mensula from '@components/mensula';
 import Toolbar from '@components/toolbar';
 import ToolbarColumnsButton from '@components/toolbar-columns-button';
 import ToolbarExportCsv from '@components/toolbar-export-csv';
@@ -12,8 +12,8 @@ import { baseMeta, type StoryArgs } from './meta';
 
 const meta = {
   ...baseMeta,
-  title: 'TableWright/Toolbar',
-  component: TableWright,
+  title: 'Mensula/Toolbar',
+  component: Mensula,
   args: { ...baseMeta.args, showToolbar: true, label: 'Computing pioneers' },
 } satisfies Meta<StoryArgs>;
 
@@ -25,7 +25,7 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {};
 
 /**
- * The drop-ins rearranged inside `TableWrightToolbar`, next to a consumer's own button. Grid
+ * The drop-ins rearranged inside `MensulaToolbar`, next to a consumer's own button. Grid
  * props still apply: `disableColumnFilter` or `disableColumnSelector` hide their buttons.
  */
 export const Custom: Story = {

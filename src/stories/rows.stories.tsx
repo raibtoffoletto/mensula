@@ -1,12 +1,12 @@
-import TableWright from '@components/table-wright';
+import Mensula from '@components/mensula';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { baseMeta, type StoryArgs } from './meta';
 import { makeRows } from './data';
 
 const meta = {
   ...baseMeta,
-  title: 'TableWright/Rows',
-  component: TableWright,
+  title: 'Mensula/Rows',
+  component: Mensula,
 } satisfies Meta<StoryArgs>;
 
 export default meta;

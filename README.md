@@ -1,13 +1,15 @@
-# tablewright
+# mensula
+
+**Little table, big grid.** _Mensula_ is Latin for "little table".
 
 An opinionated extension of [MUI X Data Grid (Community)](https://mui.com/x/react-data-grid/) — the free tier — packaged as a reusable React component library.
 
-> Status: early scaffold. The initial `TableWright` is a passthrough over `DataGrid` while the API surface takes shape.
+> Status: early scaffold. The initial `Mensula` is a passthrough over `DataGrid` while the API surface takes shape.
 
 ## Install
 
 ```sh
-yarn add tablewright
+yarn add mensula
 ```
 
 ### Peer dependencies
@@ -30,7 +32,7 @@ yarn add react react-dom @mui/material @mui/x-data-grid @emotion/react @emotion/
 ## Usage
 
 ```tsx
-import { TableWright } from 'tablewright';
+import { Mensula } from 'mensula';
 
 const columns = [
   { field: 'id', headerName: 'ID', width: 90 },
@@ -45,7 +47,7 @@ const rows = [
 export default function Example() {
   return (
     <div style={{ height: 400, width: '100%' }}>
-      <TableWright rows={rows} columns={columns} />
+      <Mensula rows={rows} columns={columns} />
     </div>
   );
 }
@@ -55,35 +57,35 @@ Props extend `DataGridProps` from `@mui/x-data-grid` — anything the community 
 
 ## Toolbar
 
-`showToolbar` renders `TableWrightToolbar`: an always-open search field, the grid `label`, and text buttons for filters, columns and CSV export. Below the theme's `md` breakpoint the toolbar goes compact: the search collapses behind a search button (expanding on click, or while it holds a value) and the buttons become icon buttons with their labels as tooltips. Printing is not offered. Configure it through `slotProps.toolbar` with the grid's usual toolbar options (`showQuickFilter`, `quickFilterProps`, `csvOptions`).
+`showToolbar` renders `MensulaToolbar`: an always-open search field, the grid `label`, and text buttons for filters, columns and CSV export. Below the theme's `md` breakpoint the toolbar goes compact: the search collapses behind a search button (expanding on click, or while it holds a value) and the buttons become icon buttons with their labels as tooltips. Printing is not offered. Configure it through `slotProps.toolbar` with the grid's usual toolbar options (`showQuickFilter`, `quickFilterProps`, `csvOptions`).
 
 ### Building your own
 
-Give `TableWrightToolbar` children and they replace the default layout. Hand the result to the grid as the `toolbar` slot:
+Give `MensulaToolbar` children and they replace the default layout. Hand the result to the grid as the `toolbar` slot:
 
 ```tsx
 import {
-  TableWright,
-  TableWrightToolbar,
+  Mensula,
+  MensulaToolbar,
   ToolbarExportCsv,
   ToolbarGroup,
   ToolbarLabel,
   ToolbarSearch,
-} from 'tablewright';
+} from 'mensula';
 import Button from '@mui/material/Button';
 
 const MyToolbar = () => (
-  <TableWrightToolbar>
+  <MensulaToolbar>
     <ToolbarSearch debounceMs={500} />
     <ToolbarLabel />
     <ToolbarGroup>
       <ToolbarExportCsv options={{ fileName: 'pioneers' }} />
       <Button>Add pioneer</Button>
     </ToolbarGroup>
-  </TableWrightToolbar>
+  </MensulaToolbar>
 );
 
-<TableWright rows={rows} columns={columns} showToolbar slots={{ toolbar: MyToolbar }} />;
+<Mensula rows={rows} columns={columns} showToolbar slots={{ toolbar: MyToolbar }} />;
 ```
 
 | Drop-in                | Renders                                            | Props                                                           | Hidden when                         |
@@ -103,10 +105,10 @@ Children skip the default layout, so `showQuickFilter`, `quickFilterProps` and `
 
 ```tsx
 // Default layout
-<TableWright showToolbar slotProps={{ toolbar: { sx: { px: 2, bgcolor: 'grey.100' } } }} />
+<Mensula showToolbar slotProps={{ toolbar: { sx: { px: 2, bgcolor: 'grey.100' } } }} />
 
 // Your own layout
-<TableWrightToolbar sx={{ justifyContent: 'flex-start', gap: 2 }}>…</TableWrightToolbar>
+<MensulaToolbar sx={{ justifyContent: 'flex-start', gap: 2 }}>…</MensulaToolbar>
 ```
 
 ## Development

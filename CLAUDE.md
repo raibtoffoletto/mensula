@@ -1,4 +1,4 @@
-# tablewright — project conventions
+# mensula — project conventions
 
 Extension of `@mui/x-data-grid` (community) published as an ESM-only React component library. Global user conventions apply; this file notes project-specific additions and overrides.
 
@@ -9,7 +9,7 @@ Extension of `@mui/x-data-grid` (community) published as an ESM-only React compo
 - **Types:** TypeScript 6, strict, `noUncheckedIndexedAccess` on. Not TS 7 yet: it drops the classic compiler API that `typescript-eslint`, `vite-plugin-dts` and `react-docgen-typescript` depend on. No `baseUrl` (removed in TS 7); `paths` are relative to `tsconfig.json`.
 - **Lint/format:** ESLint 10 flat config (`defineConfig` from `eslint/config`) + Prettier. A11y rules come from `eslint-plugin-jsx-a11y-x` (maintained fork; the original `eslint-plugin-jsx-a11y` does not support ESLint 10). Rule prefix is `jsx-a11y-x/`. No `eslint-plugin-storybook` (legacy config incompatible with flat).
 - **Tests:** Vitest + jsdom + React Testing Library. Setup at `src/test/setup.ts`.
-- **Stories:** Storybook 10 with `@storybook/react-vite` (import story types from it, not `@storybook/react`). Save-from-Controls is off (`parameters.controls.disableSaveFromUI` in `.storybook/preview.tsx`) so the web UI never rewrites story files — keep it that way. Stories live in `src/stories/`, one `<feature>.stories.tsx` per feature (titled `TableWright/<Feature>`); shared fixtures are in `src/stories/data.ts` and shared meta (args, controls, render) in `src/stories/meta.tsx`. `src/stories` is excluded from the build and type bundle.
+- **Stories:** Storybook 10 with `@storybook/react-vite` (import story types from it, not `@storybook/react`). Save-from-Controls is off (`parameters.controls.disableSaveFromUI` in `.storybook/preview.tsx`) so the web UI never rewrites story files — keep it that way. Stories live in `src/stories/`, one `<feature>.stories.tsx` per feature (titled `Mensula/<Feature>`); shared fixtures are in `src/stories/data.ts` and shared meta (args, controls, render) in `src/stories/meta.tsx`. `src/stories` is excluded from the build and type bundle.
 
 ## Distribution
 
@@ -31,7 +31,7 @@ Path aliases: `@components/*`, `@contexts/*`, `@hooks/*`, `@lib/*`, `@providers/
 
 ## Component conventions
 
-- **Files are kebab-case** (`table-wright.tsx`, `use-column-sync.ts`).
+- **Files are kebab-case** (`mensula.tsx`, `use-column-sync.ts`).
 - **Default export** for each component; the public API is re-exported from `src/index.ts`.
 - Each component ships with:
   - `<name>.tsx` — the component

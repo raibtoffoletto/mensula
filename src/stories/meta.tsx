@@ -1,10 +1,10 @@
-import TableWright, { type TableWrightProps } from '@components/table-wright';
+import Mensula, { type MensulaProps } from '@components/mensula';
 import { Box } from '@mui/material';
 import type { GridLoadingOverlayVariant } from '@mui/x-data-grid';
 import type { Decorator, Meta } from '@storybook/react-vite';
 import { columns, rows } from './data';
 
-export type StoryArgs = TableWrightProps & {
+export type StoryArgs = MensulaProps & {
   /** Story-only: overlay variant used while `loading` is true (with and without rows). */
   loadingVariant?: GridLoadingOverlayVariant;
 };
@@ -21,7 +21,7 @@ export const narrow: Decorator = (Story) => (
  * (and repeats `component`, which Storybook's indexer only picks up when written inline).
  */
 export const baseMeta = {
-  component: TableWright,
+  component: Mensula,
   args: {
     rows,
     columns,
@@ -86,7 +86,7 @@ export const baseMeta = {
   },
   render: ({ loadingVariant, slotProps, ...args }) => (
     <Box sx={{ height: args.autoHeight ? 'auto' : 520, width: '100%' }}>
-      <TableWright
+      <Mensula
         {...args}
         slotProps={{
           ...slotProps,

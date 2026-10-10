@@ -1,4 +1,4 @@
-import TableWright from '@components/table-wright';
+import Mensula from '@components/mensula';
 import type { PinnedRowsProp } from '@contexts/pinning';
 import { Box } from '@mui/material';
 import {
@@ -37,8 +37,8 @@ const totals: PinnedRowsProp<Person> = {
 
 const meta = {
   ...baseMeta,
-  title: 'TableWright/Row pinning',
-  component: TableWright,
+  title: 'Mensula/Row pinning',
+  component: Mensula,
   args: {
     ...baseMeta.args,
     pinnedRows: totals,
@@ -153,7 +153,7 @@ const PinFromActions = (args: StoryArgs) => {
 
   return (
     <Box sx={{ height: 520 }}>
-      <TableWright {...args} columns={actionColumns} pinnedRows={pinnedRows} />
+      <Mensula {...args} columns={actionColumns} pinnedRows={pinnedRows} />
     </Box>
   );
 };

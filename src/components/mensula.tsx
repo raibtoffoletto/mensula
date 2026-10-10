@@ -39,17 +39,17 @@ import PinningProvider from '@providers/pinning';
 import RowHighlightProvider from '@providers/row-highlight';
 import { useMemo } from 'react';
 
-export type TableWrightInitialState = GridInitialState & {
+export type MensulaInitialState = GridInitialState & {
   detailPanel?: { expandedRowIds?: Set<GridRowId> };
   pinnedColumns?: GridPinnedColumnFields;
   pinnedRows?: PinnedRowsProp;
   highlightedRowIds?: Set<GridRowId>;
 };
 
-/** The grid's labels plus TableWright's own. */
-export type TableWrightLocaleText = GridLocaleText & RowMenuLocaleText;
+/** The grid's labels plus Mensula's own. */
+export type MensulaLocaleText = GridLocaleText & RowMenuLocaleText;
 
-export type TableWrightProps = Omit<
+export type MensulaProps = Omit<
   DataGridProps,
   'getDetailPanelContent' | 'initialState' | 'onColumnOrderChange' | 'localeText'
 > &
@@ -58,7 +58,7 @@ export type TableWrightProps = Omit<
   ColumnReorderProps &
   FilteringProps &
   RowHighlightProps & {
-    initialState?: TableWrightInitialState;
+    initialState?: MensulaInitialState;
     /**
      * Adds a leading column (after the checkbox column) whose menu pins, unpins and highlights
      * the row. The column cannot be reordered, hidden or resized.
@@ -75,18 +75,18 @@ export type TableWrightProps = Omit<
      * reachable: right-click a header (unless `disableContextMenu`) or press Ctrl + Enter on it.
      */
     hideColumnMenu?: boolean;
-    localeText?: Partial<TableWrightLocaleText>;
+    localeText?: Partial<MensulaLocaleText>;
   };
 
 const tint = (amount: string) =>
-  `color-mix(in srgb, var(--TableWright-highlightColor) ${amount}, var(--DataGrid-t-color-background-base))`;
+  `color-mix(in srgb, var(--Mensula-highlightColor) ${amount}, var(--DataGrid-t-color-background-base))`;
 const pinnedLeft = `.${gridClasses['cell--pinnedLeft']}`;
 const pinnedRight = `.${gridClasses['cell--pinnedRight']}`;
 
 // Opaque tints, so pinned cells (which must cover the scrolling ones) match the rest of the row.
-// Selection keeps its own color. Override `--TableWright-highlightColor` through `sx` to recolor.
+// Selection keeps its own color. Override `--Mensula-highlightColor` through `sx` to recolor.
 const highlightSx: SxProps<Theme> = (theme) => ({
-  '--TableWright-highlightColor': (theme.vars ?? theme).palette.warning.main,
+  '--Mensula-highlightColor': (theme.vars ?? theme).palette.warning.main,
   [`& .${gridClasses.row}.${ROW_HIGHLIGHTED_CLASS}:not(.Mui-selected)`]: {
     [`&, & ${pinnedLeft}, & ${pinnedRight}`]: { backgroundColor: tint('20%') },
     [`&:hover, &:hover ${pinnedLeft}, &:hover ${pinnedRight}`]: { backgroundColor: tint('28%') },
@@ -98,7 +98,7 @@ const hideColumnMenuSx: SxProps<Theme> = {
   [`& .${gridClasses.menuIcon}`]: { width: '0 !important', visibility: 'hidden !important' },
 };
 
-const TableWright = ({
+const Mensula = ({
   getDetailPanelContent,
   getDetailPanelHeight,
   detailPanelExpandedRowIds,
@@ -121,7 +121,7 @@ const TableWright = ({
   hideColumnMenu = false,
   initialState: initialStateProp,
   ...props
-}: TableWrightProps) => {
+}: MensulaProps) => {
   const {
     detailPanel,
     pinnedColumns: initialPinnedColumns,
@@ -269,4 +269,4 @@ const TableWright = ({
   );
 };
 
-export default TableWright;
+export default Mensula;

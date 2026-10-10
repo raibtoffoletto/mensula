@@ -19,7 +19,7 @@ import {
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import TableWright from './table-wright';
+import Mensula from './mensula';
 
 const columns = [
   { field: 'id', headerName: 'ID', width: 90 },
@@ -37,9 +37,9 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe('TableWright', () => {
+describe('Mensula', () => {
   it('renders rows and column headers', () => {
-    render(<TableWright rows={rows} columns={columns} />);
+    render(<Mensula rows={rows} columns={columns} />);
 
     expect(screen.getByRole('columnheader', { name: /name/i })).toBeInTheDocument();
     expect(screen.getByText('Ada')).toBeInTheDocument();
@@ -47,17 +47,17 @@ describe('TableWright', () => {
   });
 
   it('adds no toggle column without getDetailPanelContent', () => {
-    render(<TableWright rows={rows} columns={columns} />);
+    render(<Mensula rows={rows} columns={columns} />);
 
     expect(screen.getAllByRole('columnheader')).toHaveLength(2);
     expect(screen.queryByRole('button', { name: 'Expand' })).not.toBeInTheDocument();
   });
 });
 
-describe('TableWright master-detail', () => {
+describe('Mensula master-detail', () => {
   it('prepends a labelled toggle column', () => {
     render(
-      <TableWright rows={rows} columns={columns} getDetailPanelContent={getDetailPanelContent} />,
+      <Mensula rows={rows} columns={columns} getDetailPanelContent={getDetailPanelContent} />,
     );
 
     const headers = screen.getAllByRole('columnheader');
@@ -69,7 +69,7 @@ describe('TableWright master-detail', () => {
   it('expands and collapses a row panel', async () => {
     const user = userEvent.setup();
     render(
-      <TableWright rows={rows} columns={columns} getDetailPanelContent={getDetailPanelContent} />,
+      <Mensula rows={rows} columns={columns} getDetailPanelContent={getDetailPanelContent} />,
     );
 
     const [toggle] = screen.getAllByRole('button', { name: 'Expand' });
@@ -88,7 +88,7 @@ describe('TableWright master-detail', () => {
 
   it('disables the toggle for rows without content', async () => {
     render(
-      <TableWright
+      <Mensula
         rows={rows}
         columns={columns}
         getDetailPanelContent={({ row }) => (row.id === 1 ? <p>Only Ada</p> : null)}
@@ -103,7 +103,7 @@ describe('TableWright master-detail', () => {
   it('reserves the panel height as bottom spacing on the expanded row', async () => {
     const user = userEvent.setup();
     render(
-      <TableWright
+      <Mensula
         rows={rows}
         columns={columns}
         getDetailPanelContent={getDetailPanelContent}
@@ -123,7 +123,7 @@ describe('TableWright master-detail', () => {
     const user = userEvent.setup();
     const onRowClick = vi.fn();
     render(
-      <TableWright
+      <Mensula
         rows={rows}
         columns={columns}
         getDetailPanelContent={getDetailPanelContent}
@@ -138,7 +138,7 @@ describe('TableWright master-detail', () => {
 
   it('starts with the rows from initialState expanded', () => {
     render(
-      <TableWright
+      <Mensula
         rows={rows}
         columns={columns}
         getDetailPanelContent={getDetailPanelContent}
@@ -154,7 +154,7 @@ describe('TableWright master-detail', () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
     render(
-      <TableWright
+      <Mensula
         rows={rows}
         columns={columns}
         getDetailPanelContent={getDetailPanelContent}
@@ -174,7 +174,7 @@ describe('TableWright master-detail', () => {
 
   it('keeps a consumer-placed toggle column instead of adding another', () => {
     render(
-      <TableWright
+      <Mensula
         rows={rows}
         columns={[...columns, { ...GRID_DETAIL_PANEL_TOGGLE_COL_DEF, headerName: 'More' }]}
         getDetailPanelContent={getDetailPanelContent}
@@ -193,7 +193,7 @@ describe('TableWright master-detail', () => {
       return <button onClick={() => toggleDetailPanel(id)}>Close {id}</button>;
     };
     render(
-      <TableWright
+      <Mensula
         rows={rows}
         columns={columns}
         getDetailPanelContent={({ id }) => <CloseButton id={id} />}
@@ -211,7 +211,7 @@ describe('TableWright master-detail', () => {
     const user = userEvent.setup();
     vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(80);
     render(
-      <TableWright
+      <Mensula
         rows={rows}
         columns={columns}
         getDetailPanelContent={getDetailPanelContent}
@@ -244,7 +244,7 @@ describe('TableWright master-detail', () => {
     );
     vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockImplementation(() => contentHeight);
     render(
-      <TableWright
+      <Mensula
         rows={rows}
         columns={columns}
         getDetailPanelContent={getDetailPanelContent}
@@ -279,7 +279,7 @@ describe('TableWright master-detail', () => {
       );
     };
     render(
-      <TableWright
+      <Mensula
         rows={rows}
         columns={columns}
         getDetailPanelContent={({ row }) => (row.id === 1 ? <Toggles /> : null)}
@@ -296,7 +296,7 @@ describe('TableWright master-detail', () => {
   });
 });
 
-describe('TableWright column pinning', () => {
+describe('Mensula column pinning', () => {
   const people = [
     { id: 1, name: 'Ada', role: 'Engineer', city: 'London' },
     { id: 2, name: 'Linus', role: 'Maintainer', city: 'Portland' },
@@ -313,7 +313,7 @@ describe('TableWright column pinning', () => {
 
   it('pins columns from initialState to the edges', () => {
     render(
-      <TableWright
+      <Mensula
         rows={people}
         columns={peopleColumns}
         initialState={{ pinnedColumns: { left: ['name'], right: ['id'] } }}
@@ -330,11 +330,11 @@ describe('TableWright column pinning', () => {
 
   it('returns a column to its declared position when unpinned', () => {
     const { rerender } = render(
-      <TableWright rows={people} columns={peopleColumns} pinnedColumns={{ right: ['name'] }} />,
+      <Mensula rows={people} columns={peopleColumns} pinnedColumns={{ right: ['name'] }} />,
     );
     expect(headerFields()).toEqual(['id', 'role', 'city', 'name']);
 
-    rerender(<TableWright rows={people} columns={peopleColumns} pinnedColumns={{}} />);
+    rerender(<Mensula rows={people} columns={peopleColumns} pinnedColumns={{}} />);
 
     expect(headerFields()).toEqual(['id', 'name', 'role', 'city']);
     expect(header('Name')).not.toHaveClass('MuiDataGrid-columnHeader--pinnedRight');
@@ -343,7 +343,7 @@ describe('TableWright column pinning', () => {
   it('pins and unpins from the column menu', async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
-    render(<TableWright rows={people} columns={peopleColumns} onPinnedColumnsChange={onChange} />);
+    render(<Mensula rows={people} columns={peopleColumns} onPinnedColumnsChange={onChange} />);
 
     await user.click(within(header('City')).getByLabelText('City column menu'));
     await user.click(screen.getByRole('menuitem', { name: 'Pin to left' }));
@@ -362,14 +362,14 @@ describe('TableWright column pinning', () => {
   it('hides the menu items with disableColumnPinning or pinnable: false', async () => {
     const user = userEvent.setup();
     const { rerender } = render(
-      <TableWright rows={people} columns={peopleColumns} disableColumnPinning />,
+      <Mensula rows={people} columns={peopleColumns} disableColumnPinning />,
     );
     await user.click(within(header('Role')).getByLabelText('Role column menu'));
     expect(screen.queryByRole('menuitem', { name: 'Pin to left' })).not.toBeInTheDocument();
     await user.keyboard('{Escape}');
 
     rerender(
-      <TableWright
+      <Mensula
         rows={people}
         columns={peopleColumns.map((column) => ({ ...column, pinnable: column.field !== 'role' }))}
       />,
@@ -380,7 +380,7 @@ describe('TableWright column pinning', () => {
 
   it('keeps the checkbox column first and lets it be pinned', () => {
     render(
-      <TableWright
+      <Mensula
         rows={people}
         columns={peopleColumns}
         checkboxSelection
@@ -402,7 +402,7 @@ describe('TableWright column pinning', () => {
       );
     };
     render(
-      <TableWright
+      <Mensula
         rows={people}
         columns={peopleColumns.map((column) =>
           column.field === 'role' ? { ...column, renderHeader: () => <PinHeader /> } : column,
@@ -419,7 +419,7 @@ describe('TableWright column pinning', () => {
   it('pins to the right, and moves a column across sides, from the column menu', async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
-    render(<TableWright rows={people} columns={peopleColumns} onPinnedColumnsChange={onChange} />);
+    render(<Mensula rows={people} columns={peopleColumns} onPinnedColumnsChange={onChange} />);
     const menuItems = () => screen.getAllByRole('menuitem').map((item) => item.textContent);
 
     await user.click(within(header('ID')).getByLabelText('ID column menu'));
@@ -444,7 +444,7 @@ describe('TableWright column pinning', () => {
       return <button onClick={() => pinColumn('role', 'left')}>Pin role left</button>;
     };
     render(
-      <TableWright
+      <Mensula
         rows={people}
         columns={peopleColumns.map((column) =>
           column.field === 'city' ? { ...column, renderHeader: () => <PinAgain /> } : column,
@@ -460,7 +460,7 @@ describe('TableWright column pinning', () => {
   });
 });
 
-describe('TableWright row pinning', () => {
+describe('Mensula row pinning', () => {
   const people = [
     { id: 1, name: 'Ada' },
     { id: 2, name: 'Linus' },
@@ -475,7 +475,7 @@ describe('TableWright row pinning', () => {
     document.querySelector(`.MuiDataGrid-pinnedRows--${position}`) as HTMLElement;
 
   it('renders pinned rows above and below the scrolling rows', () => {
-    render(<TableWright rows={people} columns={nameColumns} pinnedRows={pinnedRows} />);
+    render(<Mensula rows={people} columns={nameColumns} pinnedRows={pinnedRows} />);
 
     expect(within(section('top')).getByText('Total')).toBeInTheDocument();
     expect(within(section('bottom')).getByText('Avg')).toBeInTheDocument();
@@ -484,7 +484,7 @@ describe('TableWright row pinning', () => {
 
   it('keeps pinned rows out of filtering and sorting', () => {
     render(
-      <TableWright
+      <Mensula
         rows={people}
         columns={nameColumns}
         pinnedRows={pinnedRows}
@@ -503,7 +503,7 @@ describe('TableWright row pinning', () => {
 
   it('does not make pinned rows selectable', () => {
     render(
-      <TableWright rows={people} columns={nameColumns} pinnedRows={pinnedRows} checkboxSelection />,
+      <Mensula rows={people} columns={nameColumns} pinnedRows={pinnedRows} checkboxSelection />,
     );
 
     expect(within(section('top')).queryByRole('checkbox')).not.toBeInTheDocument();
@@ -512,13 +512,13 @@ describe('TableWright row pinning', () => {
 
   it('shows a row from rows only once while pinned, and restores it when unpinned', () => {
     const { rerender } = render(
-      <TableWright rows={people} columns={nameColumns} pinnedRows={{ top: [people[1]!] }} />,
+      <Mensula rows={people} columns={nameColumns} pinnedRows={{ top: [people[1]!] }} />,
     );
 
     expect(screen.getAllByText('Linus')).toHaveLength(1);
     expect(within(section('top')).getByText('Linus')).toBeInTheDocument();
 
-    rerender(<TableWright rows={people} columns={nameColumns} pinnedRows={{}} />);
+    rerender(<Mensula rows={people} columns={nameColumns} pinnedRows={{}} />);
 
     expect(section('top')).toBeNull();
     expect(screen.getAllByText('Linus')).toHaveLength(1);
@@ -533,7 +533,7 @@ describe('TableWright row pinning', () => {
 
   it('never gives pinned rows a detail panel toggle', () => {
     render(
-      <TableWright
+      <Mensula
         rows={people}
         columns={nameColumns}
         pinnedRows={pinnedRows}
@@ -546,7 +546,7 @@ describe('TableWright row pinning', () => {
   });
 });
 
-describe('TableWright row menu', () => {
+describe('Mensula row menu', () => {
   const people = [
     { id: 1, name: 'Ada' },
     { id: 2, name: 'Linus' },
@@ -567,14 +567,14 @@ describe('TableWright row menu', () => {
     screen.getAllByRole('columnheader').map((header) => header.getAttribute('data-field'));
 
   it('adds no menu column without showRowMenu', () => {
-    render(<TableWright rows={people} columns={nameColumns} />);
+    render(<Mensula rows={people} columns={nameColumns} />);
 
     expect(headerFields()).toEqual(['name']);
   });
 
   it('prepends a labelled, fixed menu column after the checkbox column', () => {
     render(
-      <TableWright
+      <Mensula
         rows={people}
         columns={nameColumns}
         showRowMenu
@@ -594,7 +594,7 @@ describe('TableWright row menu', () => {
 
   it('keeps a consumer-placed menu column instead of adding another', () => {
     render(
-      <TableWright rows={people} columns={[...nameColumns, GRID_ROW_MENU_COL_DEF]} showRowMenu />,
+      <Mensula rows={people} columns={[...nameColumns, GRID_ROW_MENU_COL_DEF]} showRowMenu />,
     );
 
     expect(headerFields()).toEqual(['name', '__row_menu__']);
@@ -603,7 +603,7 @@ describe('TableWright row menu', () => {
   it('does not select the row or fire onRowClick when used', async () => {
     const user = userEvent.setup();
     const onRowClick = vi.fn();
-    render(<TableWright rows={people} columns={nameColumns} showRowMenu onRowClick={onRowClick} />);
+    render(<Mensula rows={people} columns={nameColumns} showRowMenu onRowClick={onRowClick} />);
 
     await openMenu(user, 'Ada');
 
@@ -615,7 +615,7 @@ describe('TableWright row menu', () => {
     const user = userEvent.setup();
     const onPinnedRowsChange = vi.fn();
     render(
-      <TableWright
+      <Mensula
         rows={people}
         columns={nameColumns}
         showRowMenu
@@ -649,7 +649,7 @@ describe('TableWright row menu', () => {
   it('pins next to the scrolling rows, keeping rows pinned through initialState', async () => {
     const user = userEvent.setup();
     render(
-      <TableWright
+      <Mensula
         rows={people}
         columns={nameColumns}
         showRowMenu
@@ -669,7 +669,7 @@ describe('TableWright row menu', () => {
     const onPinnedRowsChange = vi.fn();
     const pinnedRows = { top: [people[0]!] };
     render(
-      <TableWright
+      <Mensula
         rows={people}
         columns={nameColumns}
         showRowMenu
@@ -687,7 +687,7 @@ describe('TableWright row menu', () => {
   it('offers only highlighting on pinned rows that are not in rows', async () => {
     const user = userEvent.setup();
     render(
-      <TableWright
+      <Mensula
         rows={people}
         columns={nameColumns}
         showRowMenu
@@ -704,7 +704,7 @@ describe('TableWright row menu', () => {
     const user = userEvent.setup();
     const onHighlightedRowIdsChange = vi.fn();
     render(
-      <TableWright
+      <Mensula
         rows={people}
         columns={nameColumns}
         showRowMenu
@@ -729,7 +729,7 @@ describe('TableWright row menu', () => {
   it('keeps the highlight while a row is pinned', async () => {
     const user = userEvent.setup();
     render(
-      <TableWright
+      <Mensula
         rows={people}
         columns={nameColumns}
         showRowMenu
@@ -747,12 +747,12 @@ describe('TableWright row menu', () => {
 
   it('supports controlled highlighted rows without the menu', () => {
     const { rerender } = render(
-      <TableWright rows={people} columns={nameColumns} highlightedRowIds={new Set([1])} />,
+      <Mensula rows={people} columns={nameColumns} highlightedRowIds={new Set([1])} />,
     );
 
     expect(rowOf('Ada')).toHaveClass(ROW_HIGHLIGHTED_CLASS);
 
-    rerender(<TableWright rows={people} columns={nameColumns} highlightedRowIds={new Set([2])} />);
+    rerender(<Mensula rows={people} columns={nameColumns} highlightedRowIds={new Set([2])} />);
 
     expect(rowOf('Ada')).not.toHaveClass(ROW_HIGHLIGHTED_CLASS);
     expect(rowOf('Linus')).toHaveClass(ROW_HIGHLIGHTED_CLASS);
@@ -761,7 +761,7 @@ describe('TableWright row menu', () => {
   it('translates its labels through localeText', async () => {
     const user = userEvent.setup();
     render(
-      <TableWright
+      <Mensula
         rows={people}
         columns={nameColumns}
         showRowMenu
@@ -792,7 +792,7 @@ describe('TableWright row menu', () => {
       );
     };
     render(
-      <TableWright rows={people} columns={nameColumns} slots={{ toolbar: Controls }} showToolbar />,
+      <Mensula rows={people} columns={nameColumns} slots={{ toolbar: Controls }} showToolbar />,
     );
 
     await user.click(screen.getByRole('button', { name: 'pin' }));
@@ -804,7 +804,7 @@ describe('TableWright row menu', () => {
   });
 });
 
-describe('TableWright shift-click highlight', () => {
+describe('Mensula shift-click highlight', () => {
   const people = [
     { id: 1, name: 'Ada' },
     { id: 2, name: 'Linus' },
@@ -827,7 +827,7 @@ describe('TableWright shift-click highlight', () => {
     const onRowClick = vi.fn();
     const onHighlightedRowIdsChange = vi.fn();
     render(
-      <TableWright
+      <Mensula
         rows={people}
         columns={nameColumns}
         checkboxSelection
@@ -856,7 +856,7 @@ describe('TableWright shift-click highlight', () => {
 
   it('ignores plain clicks and Shift combined with other modifiers', async () => {
     const user = userEvent.setup();
-    render(<TableWright rows={people} columns={nameColumns} />);
+    render(<Mensula rows={people} columns={nameColumns} />);
 
     await user.click(screen.getByText('Ada'));
     await shiftClick(user, screen.getByText('Linus'), '{Control>}{Shift>}');
@@ -866,7 +866,7 @@ describe('TableWright shift-click highlight', () => {
 
   it('leaves the checkbox and row menu cells alone', async () => {
     const user = userEvent.setup();
-    render(<TableWright rows={people} columns={nameColumns} checkboxSelection showRowMenu />);
+    render(<Mensula rows={people} columns={nameColumns} checkboxSelection showRowMenu />);
 
     await shiftClick(user, within(rowOf('Ada')).getByRole('checkbox'));
     await shiftClick(user, within(rowOf('Linus')).getByRole('button', { name: 'more' }));
@@ -879,7 +879,7 @@ describe('TableWright shift-click highlight', () => {
   it('highlights pinned rows too', async () => {
     const user = userEvent.setup();
     render(
-      <TableWright
+      <Mensula
         rows={people}
         columns={nameColumns}
         pinnedRows={{ top: [{ id: 'total', name: 'Total' }] }}
@@ -894,7 +894,7 @@ describe('TableWright shift-click highlight', () => {
   it('gives Shift + click back to the grid with disableRowHighlightOnShiftClick', async () => {
     const user = userEvent.setup();
     render(
-      <TableWright
+      <Mensula
         rows={people}
         columns={nameColumns}
         checkboxSelection
@@ -911,7 +911,7 @@ describe('TableWright shift-click highlight', () => {
   });
 });
 
-describe('TableWright column reordering', () => {
+describe('Mensula column reordering', () => {
   const people = [{ id: 1, name: 'Ada', role: 'Engineer', city: 'London' }];
   const peopleColumns = [
     { field: 'id', headerName: 'ID' },
@@ -949,7 +949,7 @@ describe('TableWright column reordering', () => {
   it('moves a column by dragging its header, and fires onColumnOrderChange on drop', () => {
     const onColumnOrderChange = vi.fn();
     render(
-      <TableWright
+      <Mensula
         rows={people}
         columns={peopleColumns}
         onColumnOrderChange={onColumnOrderChange}
@@ -968,7 +968,7 @@ describe('TableWright column reordering', () => {
   });
 
   it('floats a copy of the header under a grabbing cursor while dragging', async () => {
-    render(<TableWright rows={people} columns={peopleColumns} />);
+    render(<Mensula rows={people} columns={peopleColumns} />);
     const preview = () => document.querySelector<HTMLElement>(`.${DRAG_PREVIEW_CLASS}`);
     const grabbing = () =>
       [...document.head.querySelectorAll('style')].some((style) =>
@@ -991,7 +991,7 @@ describe('TableWright column reordering', () => {
   });
 
   it('only moves toward the direction the pointer travels', () => {
-    render(<TableWright rows={people} columns={peopleColumns} />);
+    render(<Mensula rows={people} columns={peopleColumns} />);
 
     // Still over Name, but moving left: no swap back.
     dragHeader('ID', ['Name']);
@@ -1001,7 +1001,7 @@ describe('TableWright column reordering', () => {
   });
 
   it('does not sort when a header drag ends on it', () => {
-    render(<TableWright rows={people} columns={peopleColumns} />);
+    render(<Mensula rows={people} columns={peopleColumns} />);
 
     const idHeader = header('ID');
     dragHeader('ID', ['Name']);
@@ -1015,7 +1015,7 @@ describe('TableWright column reordering', () => {
   it('keeps columns within their pinned section', () => {
     const onPinnedColumnsChange = vi.fn();
     render(
-      <TableWright
+      <Mensula
         rows={people}
         columns={peopleColumns}
         initialState={{ pinnedColumns: { left: ['name', 'role'] } }}
@@ -1033,7 +1033,7 @@ describe('TableWright column reordering', () => {
   });
 
   it('honors disableColumnReorder', () => {
-    render(<TableWright rows={people} columns={peopleColumns} disableColumnReorder />);
+    render(<Mensula rows={people} columns={peopleColumns} disableColumnReorder />);
     dragHeader('ID', ['Name']);
     expect(headerFields()).toEqual(['id', 'name', 'role', 'city']);
   });
@@ -1041,7 +1041,7 @@ describe('TableWright column reordering', () => {
   it('never drags a disableReorder column, and only displaces it toward a movable one', () => {
     const fixed = new Set(['id', 'name']);
     render(
-      <TableWright
+      <Mensula
         rows={people}
         columns={peopleColumns.map((column) => ({
           ...column,
@@ -1059,32 +1059,32 @@ describe('TableWright column reordering', () => {
   });
 
   it('keeps the checkbox column first', () => {
-    render(<TableWright rows={people} columns={peopleColumns} checkboxSelection />);
+    render(<Mensula rows={people} columns={peopleColumns} checkboxSelection />);
 
     dragHeader('ID', ['Select all rows'], -1);
     expect(headerFields()).toEqual(['__check__', 'id', 'name', 'role', 'city']);
   });
 
   it('keeps the order across new columns arrays and pinning changes', () => {
-    const { rerender } = render(<TableWright rows={people} columns={peopleColumns} />);
+    const { rerender } = render(<Mensula rows={people} columns={peopleColumns} />);
     dragHeader('City', ['Role', 'Name'], -1);
     expect(headerFields()).toEqual(['id', 'city', 'name', 'role']);
 
-    rerender(<TableWright rows={people} columns={[...peopleColumns]} />);
+    rerender(<Mensula rows={people} columns={[...peopleColumns]} />);
     expect(headerFields()).toEqual(['id', 'city', 'name', 'role']);
 
     rerender(
-      <TableWright rows={people} columns={[...peopleColumns]} pinnedColumns={{ left: ['name'] }} />,
+      <Mensula rows={people} columns={[...peopleColumns]} pinnedColumns={{ left: ['name'] }} />,
     );
     expect(headerFields()).toEqual(['name', 'id', 'city', 'role']);
 
-    rerender(<TableWright rows={people} columns={[...peopleColumns]} pinnedColumns={{}} />);
+    rerender(<Mensula rows={people} columns={[...peopleColumns]} pinnedColumns={{}} />);
     expect(headerFields()).toEqual(['id', 'city', 'name', 'role']);
   });
 
   it('starts from initialState.columns.orderedFields', () => {
     render(
-      <TableWright
+      <Mensula
         rows={people}
         columns={peopleColumns}
         initialState={{ columns: { orderedFields: ['role', 'id', 'name', 'city'] } }}
@@ -1106,7 +1106,7 @@ describe('TableWright column reordering', () => {
       );
     };
     render(
-      <TableWright
+      <Mensula
         rows={people}
         columns={peopleColumns.map((column) =>
           column.field === 'role' ? { ...column, renderHeader: () => <MoveButton /> } : column,
@@ -1133,7 +1133,7 @@ describe('TableWright column reordering', () => {
   };
 
   it('keeps a press without movement a click, so headers still sort', () => {
-    render(<TableWright rows={people} columns={peopleColumns} />);
+    render(<Mensula rows={people} columns={peopleColumns} />);
     const idHeader = header('ID');
 
     fireEvent.pointerDown(idHeader, { button: 0, pointerId: 1, pointerType: 'mouse' });
@@ -1144,7 +1144,7 @@ describe('TableWright column reordering', () => {
   });
 
   it('ignores touch, secondary buttons, and presses on header controls', () => {
-    render(<TableWright rows={people} columns={peopleColumns} />);
+    render(<Mensula rows={people} columns={peopleColumns} />);
 
     pressAndDrag(header('ID'), header('Name'), { pointerType: 'touch' });
     pressAndDrag(header('ID'), header('Name'), { button: 2 });
@@ -1165,11 +1165,11 @@ describe('TableWright column reordering', () => {
       { field: 'name', headerName: 'Inner name' },
     ];
     render(
-      <TableWright
+      <Mensula
         rows={people}
         columns={peopleColumns}
         onColumnOrderChange={onColumnOrderChange}
-        getDetailPanelContent={() => <TableWright rows={people} columns={innerColumns} />}
+        getDetailPanelContent={() => <Mensula rows={people} columns={innerColumns} />}
         initialState={{ detailPanel: { expandedRowIds: new Set([1]) } }}
       />,
     );
@@ -1189,7 +1189,7 @@ describe('TableWright column reordering', () => {
   });
 
   it('cleans up the copy and the cursor when unmounted mid-drag', () => {
-    const { unmount } = render(<TableWright rows={people} columns={peopleColumns} />);
+    const { unmount } = render(<Mensula rows={people} columns={peopleColumns} />);
     document.elementFromPoint = vi.fn(() => header('Name'));
     fireEvent.pointerDown(header('ID'), { button: 0, pointerId: 1, pointerType: 'mouse' });
     fireEvent.pointerMove(window, { pointerId: 1, clientX: 20 });
@@ -1202,21 +1202,21 @@ describe('TableWright column reordering', () => {
   });
 
   it('slots newly declared columns in after their declared neighbor', () => {
-    const { rerender } = render(<TableWright rows={people} columns={peopleColumns} />);
+    const { rerender } = render(<Mensula rows={people} columns={peopleColumns} />);
     dragHeader('City', ['Role', 'Name', 'ID'], -1);
     expect(headerFields()).toEqual(['city', 'id', 'name', 'role']);
 
     const country = { field: 'country', headerName: 'Country' };
     const withCountry = [...peopleColumns.slice(0, 3), country, peopleColumns[3]!];
-    rerender(<TableWright rows={people} columns={withCountry} />);
+    rerender(<Mensula rows={people} columns={withCountry} />);
     expect(headerFields()).toEqual(['city', 'id', 'name', 'role', 'country']);
 
     const withCode = [{ field: 'code', headerName: 'Code' }, ...withCountry];
-    rerender(<TableWright rows={people} columns={withCode} />);
+    rerender(<Mensula rows={people} columns={withCode} />);
     expect(headerFields()).toEqual(['code', 'city', 'id', 'name', 'role', 'country']);
 
     rerender(
-      <TableWright rows={people} columns={withCode.filter(({ field }) => field !== 'name')} />,
+      <Mensula rows={people} columns={withCode.filter(({ field }) => field !== 'name')} />,
     );
     expect(headerFields()).toEqual(['code', 'city', 'id', 'role', 'country']);
   });
@@ -1224,7 +1224,7 @@ describe('TableWright column reordering', () => {
   it('reorders controlled pinned columns through onPinnedColumnsChange', () => {
     const onPinnedColumnsChange = vi.fn();
     const { rerender } = render(
-      <TableWright
+      <Mensula
         rows={people}
         columns={peopleColumns}
         pinnedColumns={{ left: ['name', 'role'] }}
@@ -1239,7 +1239,7 @@ describe('TableWright column reordering', () => {
     expect(headerFields()).toEqual(['name', 'role', 'id', 'city']);
 
     rerender(
-      <TableWright
+      <Mensula
         rows={people}
         columns={peopleColumns}
         pinnedColumns={onPinnedColumnsChange.mock.lastCall![0]}
@@ -1250,7 +1250,7 @@ describe('TableWright column reordering', () => {
   });
 });
 
-describe('TableWright context menu', () => {
+describe('Mensula context menu', () => {
   const people = [
     { id: 1, name: 'Ada' },
     { id: 2, name: 'Linus' },
@@ -1268,7 +1268,7 @@ describe('TableWright context menu', () => {
     const user = userEvent.setup();
     const onPinnedRowsChange = vi.fn();
     render(
-      <TableWright
+      <Mensula
         rows={people}
         columns={nameColumns}
         pinnedRows={{}}
@@ -1288,7 +1288,7 @@ describe('TableWright context menu', () => {
   it('opens it on pinned rows and alongside the menu column, translated', async () => {
     const user = userEvent.setup();
     render(
-      <TableWright
+      <Mensula
         rows={people}
         columns={nameColumns}
         showRowMenu
@@ -1306,7 +1306,7 @@ describe('TableWright context menu', () => {
   });
 
   it('opens the column menu on a right-clicked header', async () => {
-    render(<TableWright rows={people} columns={nameColumns} />);
+    render(<Mensula rows={people} columns={nameColumns} />);
 
     expect(rightClick(headerOf('Name'))).toBe(false);
 
@@ -1316,7 +1316,7 @@ describe('TableWright context menu', () => {
 
   it('keeps the browser menu on headers without a column menu and in text fields', () => {
     render(
-      <TableWright
+      <Mensula
         rows={people}
         columns={[
           { ...nameColumns[0]!, disableColumnMenu: true },
@@ -1335,7 +1335,7 @@ describe('TableWright context menu', () => {
   });
 
   it('hides the menu button with hideColumnMenu, keeping the menu a right-click away', async () => {
-    render(<TableWright rows={people} columns={nameColumns} hideColumnMenu />);
+    render(<Mensula rows={people} columns={nameColumns} hideColumnMenu />);
 
     const icon = headerOf('Name').querySelector('.MuiDataGrid-menuIcon');
     expect(icon).toHaveStyle({ visibility: 'hidden' });
@@ -1347,7 +1347,7 @@ describe('TableWright context menu', () => {
   });
 
   it('keeps the browser menu everywhere with disableContextMenu', () => {
-    render(<TableWright rows={people} columns={nameColumns} showRowMenu disableContextMenu />);
+    render(<Mensula rows={people} columns={nameColumns} showRowMenu disableContextMenu />);
 
     expect(rightClick(cellOf('Ada'))).toBe(true);
     expect(rightClick(headerOf('Name'))).toBe(true);
@@ -1355,7 +1355,7 @@ describe('TableWright context menu', () => {
   });
 });
 
-describe('TableWright hooks outside a TableWright', () => {
+describe('Mensula hooks outside a Mensula', () => {
   it.each([
     ['useColumnPinning', useColumnPinning],
     ['useColumnReorder', useColumnReorder],
@@ -1365,6 +1365,6 @@ describe('TableWright hooks outside a TableWright', () => {
   ])('%s throws a helpful error', (_name, hook) => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    expect(() => renderHook(() => hook())).toThrow(/must be used inside a TableWright/);
+    expect(() => renderHook(() => hook())).toThrow(/must be used inside a Mensula/);
   });
 });

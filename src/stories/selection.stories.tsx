@@ -1,11 +1,11 @@
-import TableWright from '@components/table-wright';
+import Mensula from '@components/mensula';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { baseMeta, type StoryArgs } from './meta';
 
 const meta = {
   ...baseMeta,
-  title: 'TableWright/Selection',
-  component: TableWright,
+  title: 'Mensula/Selection',
+  component: Mensula,
 } satisfies Meta<StoryArgs>;
 
 export default meta;
