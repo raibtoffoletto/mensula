@@ -16,11 +16,13 @@ jobs:
       - uses: actions/checkout@v7
 
       # No dependency cache: npm advises against restoring caches in release builds.
+      # No registry-url either: it writes an .npmrc with `_authToken=${NODE_AUTH_TOKEN}`, which
+      # Yarn 1 refuses to install with while the variable is unset. npm's OIDC exchange needs
+      # no .npmrc; it targets the default registry and stores the token itself.
       - uses: actions/setup-node@v7
         with:
           node-version: 24 # ships npm 11 (trusted publishing needs >= 11.5.1)
           package-manager-cache: false
-          registry-url: https://registry.npmjs.org
 
       # The release tag is the version (`v1.2.0` or `1.2.0`); package.json in the repo is never
       # bumped. A GitHub pre-release, or a semver prerelease like `1.2.0-beta.1`, goes to `next`.
