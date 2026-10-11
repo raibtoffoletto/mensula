@@ -1,0 +1,47 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+  id-token: write # npm trusted publishing (OIDC); no npm token is stored anywhere
+
+jobs:
+  publish:
+    name: Publish to npm
+    runs-on: ubuntu-latest # trusted publishing does not support self-hosted runners
+    steps:
+      - uses: actions/checkout@v7
+
+      # No dependency cache: npm advises against restoring caches in release builds.
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24 # ships npm 11 (trusted publishing needs >= 11.5.1)
+          package-manager-cache: false
+          registry-url: https://registry.npmjs.org
+
+      # The release tag is the version (`v1.2.0` or `1.2.0`); package.json in the repo is never
+      # bumped. A GitHub pre-release, or a semver prerelease like `1.2.0-beta.1`, goes to `next`.
+      - name: Set version from release tag
+        id: version
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+          PRERELEASE: ${{ github.event.release.prerelease }}
+        run: |
+          version="${TAG#v}"
+          npm version "$version" --no-git-tag-version --allow-same-version
+          if [ "$PRERELEASE" = "true" ] || [[ "$version" == *-* ]]; then
+            echo "dist-tag=next" >> "$GITHUB_OUTPUT"
+          else
+            echo "dist-tag=latest" >> "$GITHUB_OUTPUT"
+          fi
+
+      - run: yarn install --frozen-lockfile
+      - run: yarn lint
+      - run: yarn test
+
+      # Publishes straight to the registry (the trusted publisher must allow direct publishing).
+      # prepublishOnly runs `yarn build`.
+      - run: npm publish --provenance --access public --tag ${{ steps.version.outputs.dist-tag }}

@@ -1,9 +1,5 @@
 export { default as Mensula } from '@components/mensula';
-export type {
-  MensulaInitialState,
-  MensulaLocaleText,
-  MensulaProps,
-} from '@components/mensula';
+export type { MensulaInitialState, MensulaLocaleText, MensulaProps } from '@components/mensula';
 export { default as MensulaColumnMenu } from '@components/column-menu';
 export { default as ColumnMenuPinningItem } from '@components/column-menu-pinning-item';
 export { default as useColumnPinning } from '@hooks/use-column-pinning';

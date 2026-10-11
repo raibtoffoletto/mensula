@@ -148,9 +148,10 @@ ESM-only. The package exports a single entry (`.`) that resolves to `dist/index.
 
 ```sh
 yarn build        # runs typecheck then vite build
-npm publish       # prepublishOnly re-runs yarn build
 ```
+
+Releases are cut from GitHub: publishing a release runs `.github/workflows/release.yml`, which takes the version from the release tag (`v1.2.0` → `1.2.0`; `package.json` in the repo is not bumped) and publishes to npm via trusted publishing. Releases go to the `latest` dist-tag; GitHub pre-releases and semver prereleases (`1.2.0-beta.1`) go to `next`.
 
 ## License
 
-MIT
+[MIT](LICENSE)

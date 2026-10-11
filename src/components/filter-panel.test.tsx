@@ -68,9 +68,7 @@ describe('FilterPanel', () => {
 
   it('keeps the stock panel with disableMultipleColumnsFiltering', async () => {
     const user = userEvent.setup();
-    render(
-      <Mensula rows={rows} columns={columns} showToolbar disableMultipleColumnsFiltering />,
-    );
+    render(<Mensula rows={rows} columns={columns} showToolbar disableMultipleColumnsFiltering />);
 
     await user.click(screen.getByRole('button', { name: 'Filters' }));
 

@@ -76,11 +76,7 @@ const ControlledPinning = (args: StoryArgs) => {
         <code>pinnedColumns: {JSON.stringify(pinnedColumns)}</code>
       </Alert>
       <Box sx={{ height: 520 }}>
-        <Mensula
-          {...args}
-          pinnedColumns={pinnedColumns}
-          onPinnedColumnsChange={setPinnedColumns}
-        />
+        <Mensula {...args} pinnedColumns={pinnedColumns} onPinnedColumnsChange={setPinnedColumns} />
       </Box>
     </>
   );

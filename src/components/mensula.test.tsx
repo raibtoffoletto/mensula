@@ -56,9 +56,7 @@ describe('Mensula', () => {
 
 describe('Mensula master-detail', () => {
   it('prepends a labelled toggle column', () => {
-    render(
-      <Mensula rows={rows} columns={columns} getDetailPanelContent={getDetailPanelContent} />,
-    );
+    render(<Mensula rows={rows} columns={columns} getDetailPanelContent={getDetailPanelContent} />);
 
     const headers = screen.getAllByRole('columnheader');
     expect(headers).toHaveLength(3);
@@ -68,9 +66,7 @@ describe('Mensula master-detail', () => {
 
   it('expands and collapses a row panel', async () => {
     const user = userEvent.setup();
-    render(
-      <Mensula rows={rows} columns={columns} getDetailPanelContent={getDetailPanelContent} />,
-    );
+    render(<Mensula rows={rows} columns={columns} getDetailPanelContent={getDetailPanelContent} />);
 
     const [toggle] = screen.getAllByRole('button', { name: 'Expand' });
     await user.click(toggle!);
@@ -593,9 +589,7 @@ describe('Mensula row menu', () => {
   });
 
   it('keeps a consumer-placed menu column instead of adding another', () => {
-    render(
-      <Mensula rows={people} columns={[...nameColumns, GRID_ROW_MENU_COL_DEF]} showRowMenu />,
-    );
+    render(<Mensula rows={people} columns={[...nameColumns, GRID_ROW_MENU_COL_DEF]} showRowMenu />);
 
     expect(headerFields()).toEqual(['name', '__row_menu__']);
   });
@@ -949,11 +943,7 @@ describe('Mensula column reordering', () => {
   it('moves a column by dragging its header, and fires onColumnOrderChange on drop', () => {
     const onColumnOrderChange = vi.fn();
     render(
-      <Mensula
-        rows={people}
-        columns={peopleColumns}
-        onColumnOrderChange={onColumnOrderChange}
-      />,
+      <Mensula rows={people} columns={peopleColumns} onColumnOrderChange={onColumnOrderChange} />,
     );
 
     dragHeader('ID', ['Name', 'Role']);
@@ -1215,9 +1205,7 @@ describe('Mensula column reordering', () => {
     rerender(<Mensula rows={people} columns={withCode} />);
     expect(headerFields()).toEqual(['code', 'city', 'id', 'name', 'role', 'country']);
 
-    rerender(
-      <Mensula rows={people} columns={withCode.filter(({ field }) => field !== 'name')} />,
-    );
+    rerender(<Mensula rows={people} columns={withCode.filter(({ field }) => field !== 'name')} />);
     expect(headerFields()).toEqual(['code', 'city', 'id', 'role', 'country']);
   });
 
