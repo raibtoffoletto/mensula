@@ -111,9 +111,13 @@ Children skip the default layout, so `showQuickFilter`, `quickFilterProps` and `
 <MensulaToolbar sx={{ justifyContent: 'flex-start', gap: 2 }}>…</MensulaToolbar>
 ```
 
+## Row context menu
+
+Right-clicking a row opens its row menu (pin, unpin, highlight) at the pointer, under two copy items that stand in for the browser's own menu. **Copy value** copies the clicked cell as the grid displays it, and only shows on data cells. **Copy row** copies every data column of the row, hidden ones included, as `Header: value` lines in column order; the checkbox, detail-panel toggle and `actions` columns are left out. Translate the labels through `localeText` (`rowMenuCopyValue`, `rowMenuCopyRow`). `disableContextMenu` turns the menu off.
+
 ## View menu
 
-Right-clicking the footer (outside its buttons) or the empty part of the header row (past the last column, or an empty column-group cell) opens the view menu. From it, users pick the density and turn the cell and header vertical borders on or off. `disableDensitySelector` removes the density choices, and `disableContextMenu` turns the menu off along with the row and column-header context menus.
+Right-clicking the toolbar or the footer (outside their buttons and fields) or the empty part of the header row (past the last column, or an empty column-group cell) opens the view menu. From it, users pick the density and turn the cell and header vertical borders on or off. The density options use the grid's `densityCompactIcon`, `densityStandardIcon` and `densityComfortableIcon` slots when you set them. `disableDensitySelector` removes the density choices, and `disableContextMenu` turns the menu off along with the row and column-header context menus.
 
 Each setting is controlled when you pass its prop and uncontrolled otherwise:
 

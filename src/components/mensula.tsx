@@ -26,6 +26,7 @@ import {
   type ViewMenuLocaleText,
 } from '@lib/constants';
 import { GRID_DETAIL_PANEL_TOGGLE_COL_DEF } from '@lib/detail-panel';
+import { UnsortIcon } from '@lib/icons';
 import { GRID_ROW_MENU_COL_DEF } from '@lib/row-menu';
 import type { SxProps, Theme } from '@mui/material';
 import {
@@ -37,6 +38,7 @@ import {
   type GridLocaleText,
   type GridPinnedColumnFields,
   type GridRowId,
+  type GridSlotsComponent,
 } from '@mui/x-data-grid';
 import ColumnOrderProvider from '@providers/column-order';
 import DetailPanelProvider from '@providers/detail-panel';
@@ -245,6 +247,9 @@ const Mensula = ({
   const slots = useMemo(
     () => ({
       columnMenu: ColumnMenu,
+      // The grid leaves Unsort without an icon. The cast only bridges typings: the slot takes an
+      // `SvgIcon`, as the grid's own icons are.
+      columnMenuUnsortIcon: UnsortIcon as GridSlotsComponent['columnMenuUnsortIcon'],
       columnsManagement: ColumnsManagement,
       toolbar: Toolbar,
       ...(!disableMultipleColumnsFiltering && { filterPanel: FilterPanel }),
@@ -301,6 +306,7 @@ const Mensula = ({
               text={menuText}
               disabled={disableContextMenu}
               hideDensity={props.disableDensitySelector ?? false}
+              slots={props.slots}
             />
           </RowHighlightProvider>
         </DetailPanelProvider>

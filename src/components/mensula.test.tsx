@@ -1265,7 +1265,15 @@ describe('Mensula context menu', () => {
     );
 
     expect(rightClick(cellOf('Linus'))).toBe(false);
-    expect(menuItems()).toEqual(['Pin to top', 'Pin to bottom', 'Highlight']);
+    expect(menuItems()).toEqual([
+      'Copy value',
+      'Copy row',
+      'Pin to top',
+      'Pin to bottom',
+      'Highlight',
+    ]);
+    // The copy items sit apart, above the row menu's own.
+    expect(screen.getByRole('menu').querySelector('hr')).toBeInTheDocument();
 
     await user.click(screen.getByRole('menuitem', { name: 'Pin to top' }));
 
@@ -1281,16 +1289,56 @@ describe('Mensula context menu', () => {
         columns={nameColumns}
         showRowMenu
         pinnedRows={{ bottom: [{ id: 'total', name: 'Total' }] }}
-        localeText={{ rowMenuHighlight: 'Destacar' }}
+        localeText={{
+          rowMenuHighlight: 'Destacar',
+          rowMenuCopyValue: 'Copiar valor',
+          rowMenuCopyRow: 'Copiar linha',
+        }}
       />,
     );
 
     rightClick(cellOf('Total'));
-    expect(menuItems()).toEqual(['Destacar']);
+    expect(menuItems()).toEqual(['Copiar valor', 'Copiar linha', 'Destacar']);
 
     await user.click(screen.getByRole('menuitem', { name: 'Destacar' }));
 
     expect(cellOf('Total').closest('[role="row"]')).toHaveClass(ROW_HIGHLIGHTED_CLASS);
+  });
+
+  it('copies the clicked cell as displayed, and the whole row with its hidden columns', async () => {
+    const user = userEvent.setup();
+    // After `setup()`, which swaps in its own clipboard.
+    const writeText = vi.spyOn(navigator.clipboard, 'writeText');
+    render(
+      <Mensula
+        rows={[{ id: 1, name: 'Ada', born: 1815, city: 'London' }]}
+        columns={[
+          { field: 'name', headerName: 'Name' },
+          { field: 'born', valueFormatter: (value: number) => `AD ${value}` },
+          { field: 'city', headerName: 'City' },
+        ]}
+        checkboxSelection
+        showRowMenu
+        initialState={{ columns: { columnVisibilityModel: { city: false } } }}
+      />,
+    );
+
+    rightClick(screen.getByText('AD 1815'));
+    await user.click(screen.getByRole('menuitem', { name: 'Copy value' }));
+    expect(writeText).toHaveBeenLastCalledWith('AD 1815');
+
+    rightClick(cellOf('Ada'));
+    await user.click(screen.getByRole('menuitem', { name: 'Copy row' }));
+    expect(writeText).toHaveBeenLastCalledWith('Name: Ada\nborn: AD 1815\nCity: London');
+  });
+
+  it('offers only the row copy outside data cells', () => {
+    render(<Mensula rows={people} columns={nameColumns} showRowMenu />);
+
+    const row = cellOf('Ada').closest('[role="row"]')!;
+    rightClick(row.querySelector('[data-field="__row_menu__"]')!);
+
+    expect(menuItems()).toEqual(['Copy row', 'Pin to top', 'Pin to bottom', 'Highlight']);
   });
 
   it('opens the column menu on a right-clicked header', async () => {
@@ -1300,6 +1348,26 @@ describe('Mensula context menu', () => {
 
     expect(await screen.findByRole('menu')).toBeInTheDocument();
     expect(menuItems()).toEqual(expect.arrayContaining(['Pin to left', 'Hide column']));
+  });
+
+  it('gives every column menu item an icon, Unsort and Unpin included', async () => {
+    render(
+      <Mensula
+        rows={people}
+        columns={nameColumns}
+        pinnedColumns={{ left: ['name'] }}
+        initialState={{ sorting: { sortModel: [{ field: 'name', sort: 'asc' }] } }}
+      />,
+    );
+
+    // The sort icon adds to the header's accessible name.
+    rightClick(screen.getByRole('columnheader', { name: /^Name/ }));
+
+    expect(await screen.findByRole('menuitem', { name: 'Unsort' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Unpin' })).toBeInTheDocument();
+    for (const item of screen.getAllByRole('menuitem')) {
+      expect(item.querySelector('svg')).toBeInTheDocument();
+    }
   });
 
   it('keeps the browser menu on headers without a column menu and in text fields', () => {
@@ -1378,6 +1446,36 @@ describe('Mensula view menu', () => {
       'Header borders',
     ]);
     expect(checkbox('Cell borders')).toHaveAttribute('aria-checked', 'false');
+  });
+
+  it('shows an icon before each option and the check after it, with no density heading', () => {
+    const CompactIcon = () => <svg data-testid="custom-compact" />;
+    render(
+      <Mensula
+        rows={people}
+        columns={nameColumns}
+        density="compact"
+        slots={{ densityCompactIcon: CompactIcon }}
+      />,
+    );
+
+    rightClick(footer());
+
+    expect(screen.queryByText('Density')).not.toBeInTheDocument();
+    const compact = radio('Compact');
+    expect(compact.firstElementChild).toContainElement(screen.getByTestId('custom-compact'));
+    expect(compact.lastElementChild).toHaveAttribute('data-testid', 'CheckIcon');
+    expect(compact.lastElementChild).toHaveStyle({ visibility: 'visible' });
+    expect(radio('Standard').firstElementChild).toContainElement(
+      screen.getByTestId('DensityStandardIcon'),
+    );
+    expect(radio('Standard').lastElementChild).toHaveStyle({ visibility: 'hidden' });
+    expect(checkbox('Cell borders').firstElementChild).toContainElement(
+      screen.getByTestId('CellBordersIcon'),
+    );
+    expect(checkbox('Header borders').firstElementChild).toContainElement(
+      screen.getByTestId('HeaderBordersIcon'),
+    );
   });
 
   it('sets the density from the footer', async () => {
@@ -1473,6 +1571,17 @@ describe('Mensula view menu', () => {
 
     expect(screen.queryByRole('menuitemradio')).not.toBeInTheDocument();
     expect(checkbox('Bordas das células')).toBeInTheDocument();
+  });
+
+  it('opens on the toolbar, outside its controls', () => {
+    render(<Mensula rows={people} columns={nameColumns} showToolbar />);
+
+    expect(rightClick(screen.getByRole('searchbox'))).toBe(true);
+    expect(rightClick(screen.getByRole('button', { name: /columns/i }))).toBe(true);
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+
+    expect(rightClick(document.querySelector('.MuiDataGrid-toolbar')!)).toBe(false);
+    expect(checkbox('Cell borders')).toBeInTheDocument();
   });
 
   it('keeps the browser menu on footer controls and with disableContextMenu', () => {

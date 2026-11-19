@@ -1,15 +1,24 @@
 import ContextMenu from '@components/context-menu';
 import { DENSITY_OPTIONS, type ViewMenuLocaleText } from '@lib/constants';
 import { getMenuAnchor, isOwnContextMenuTarget, type MenuAnchor } from '@lib/context-menu';
-import { CheckIcon } from '@lib/icons';
-import { Divider, ListItemIcon, ListItemText, ListSubheader, MenuItem } from '@mui/material';
+import {
+  CellBordersIcon,
+  CheckIcon,
+  DensityComfortableIcon,
+  DensityCompactIcon,
+  DensityStandardIcon,
+  HeaderBordersIcon,
+  type MenuIcon,
+} from '@lib/icons';
+import { Divider, ListItemIcon, ListItemText, MenuItem } from '@mui/material';
 import {
   gridClasses,
   gridDensitySelector,
   type DataGridProps,
   type GridDensity,
+  type GridSlotsComponent,
 } from '@mui/x-data-grid';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useState, type ComponentType, type ReactNode } from 'react';
 
 type ViewContextMenuProps = {
   apiRef: NonNullable<DataGridProps['apiRef']>;
@@ -17,6 +26,8 @@ type ViewContextMenuProps = {
   disabled: boolean;
   /** Leaves the density choices out (the grid's `disableDensitySelector`). */
   hideDensity: boolean;
+  /** The grid's `slots`, whose `density*Icon` entries replace the default density icons. */
+  slots?: Partial<GridSlotsComponent>;
   showCellVerticalBorder: boolean;
   setShowCellVerticalBorder: (show: boolean) => void;
   showColumnVerticalBorder: boolean;
@@ -29,21 +40,22 @@ type ViewContextMenuProps = {
  */
 type Anchor = MenuAnchor & {
   density: GridDensity;
-  densityTitle: ReactNode;
   densityLabels: Record<GridDensity, ReactNode>;
   setDensity: (density: GridDensity) => void;
 };
 
-// Footer controls (pagination buttons, the page size select) keep the browser's menu.
-const FOOTER_CONTROL_SELECTOR = 'button, a[href], [role="button"], [role="combobox"]';
+// Toolbar and footer controls (toolbar buttons, pagination, the page size select) keep the
+// browser's menu.
+const CONTROL_SELECTOR = 'button, a[href], [role="button"], [role="combobox"]';
+const BAR_SELECTOR = `.${gridClasses.toolbar}, .${gridClasses.footerContainer}`;
 
 /**
- * The footer, outside its controls, and the parts of the header row that hold no column header:
- * the filler after the last column and the empty cells of column groups.
+ * The toolbar and the footer, outside their controls, and the parts of the header row that hold no
+ * column header: the filler after the last column and the empty cells of column groups.
  */
 const isViewMenuArea = (target: Element) => {
-  if (target.closest(`.${gridClasses.footerContainer}`)) {
-    return !target.closest(FOOTER_CONTROL_SELECTOR);
+  if (target.closest(BAR_SELECTOR)) {
+    return !target.closest(CONTROL_SELECTOR);
   }
   if (!target.closest(`.${gridClasses.columnHeaders}`)) {
     return false;
@@ -52,12 +64,38 @@ const isViewMenuArea = (target: Element) => {
   return !header || header.classList.contains(gridClasses['columnHeader--emptyGroup']);
 };
 
-const Check = ({ checked }: { checked: boolean }) => (
-  <ListItemIcon>{checked && <CheckIcon fontSize="small" />}</ListItemIcon>
+type DensityIconSlot = (typeof DENSITY_OPTIONS)[number]['iconSlot'];
+
+const DEFAULT_DENSITY_ICONS: Record<DensityIconSlot, MenuIcon> = {
+  densityCompactIcon: DensityCompactIcon,
+  densityStandardIcon: DensityStandardIcon,
+  densityComfortableIcon: DensityComfortableIcon,
+};
+
+type ViewMenuItemProps = {
+  icon: ComponentType<{ fontSize?: 'small' }>;
+  label: ReactNode;
+  role: 'menuitemradio' | 'menuitemcheckbox';
+  checked: boolean;
+  onClick: () => void;
+};
+
+/**
+ * An option's icon on the left and, on the right, a check when it is on. The check keeps its room
+ * when off, so the labels and checks line up.
+ */
+const ViewMenuItem = ({ icon: Icon, label, role, checked, onClick }: ViewMenuItemProps) => (
+  <MenuItem role={role} aria-checked={checked} onClick={onClick}>
+    <ListItemIcon>
+      <Icon fontSize="small" />
+    </ListItemIcon>
+    <ListItemText>{label}</ListItemText>
+    <CheckIcon fontSize="small" sx={{ ml: 2, visibility: checked ? 'visible' : 'hidden' }} />
+  </MenuItem>
 );
 
 /**
- * Right-clicking the footer or the empty part of the header row opens the view menu: the grid's
+ * Right-clicking the toolbar, the footer or the empty part of the header row opens the view menu: the grid's
  * density and its vertical borders. Like the row menu, it listens on the grid root.
  */
 const ViewContextMenu = ({
@@ -65,6 +103,7 @@ const ViewContextMenu = ({
   text,
   disabled,
   hideDensity,
+  slots,
   showCellVerticalBorder,
   setShowCellVerticalBorder,
   showColumnVerticalBorder,
@@ -90,7 +129,6 @@ const ViewContextMenu = ({
       setAnchor({
         ...getMenuAnchor(event),
         density: gridDensitySelector(apiRef),
-        densityTitle: api.getLocaleText('toolbarDensity'),
         densityLabels: Object.fromEntries(
           DENSITY_OPTIONS.map(({ density, labelKey }) => [density, api.getLocaleText(labelKey)]),
         ) as Record<GridDensity, ReactNode>,
@@ -111,17 +149,15 @@ const ViewContextMenu = ({
   const items: ReactNode[] = [];
   if (anchor && !hideDensity) {
     items.push(
-      <ListSubheader key="density">{anchor.densityTitle}</ListSubheader>,
-      ...DENSITY_OPTIONS.map(({ density }) => (
-        <MenuItem
+      ...DENSITY_OPTIONS.map(({ density, iconSlot }) => (
+        <ViewMenuItem
           key={density}
+          icon={slots?.[iconSlot] ?? DEFAULT_DENSITY_ICONS[iconSlot]}
+          label={anchor.densityLabels[density]}
           role="menuitemradio"
-          aria-checked={anchor.density === density}
+          checked={anchor.density === density}
           onClick={select(() => anchor.setDensity(density))}
-        >
-          <Check checked={anchor.density === density} />
-          <ListItemText>{anchor.densityLabels[density]}</ListItemText>
-        </MenuItem>
+        />
       )),
       <Divider key="divider" />,
     );
@@ -129,27 +165,28 @@ const ViewContextMenu = ({
   if (anchor) {
     const borders = [
       {
+        icon: CellBordersIcon,
         label: text.viewMenuCellBorders,
         checked: showCellVerticalBorder,
         toggle: () => setShowCellVerticalBorder(!showCellVerticalBorder),
       },
       {
+        icon: HeaderBordersIcon,
         label: text.viewMenuHeaderBorders,
         checked: showColumnVerticalBorder,
         toggle: () => setShowColumnVerticalBorder(!showColumnVerticalBorder),
       },
     ];
     items.push(
-      ...borders.map(({ label, checked, toggle }) => (
-        <MenuItem
+      ...borders.map(({ icon, label, checked, toggle }) => (
+        <ViewMenuItem
           key={label}
+          icon={icon}
+          label={label}
           role="menuitemcheckbox"
-          aria-checked={checked}
+          checked={checked}
           onClick={select(toggle)}
-        >
-          <Check checked={checked} />
-          <ListItemText>{label}</ListItemText>
-        </MenuItem>
+        />
       )),
     );
   }

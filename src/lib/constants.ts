@@ -1,4 +1,4 @@
-import type { GridDensity, GridLocaleText } from '@mui/x-data-grid';
+import type { GridDensity, GridLocaleText, GridSlotsComponent } from '@mui/x-data-grid';
 
 export const PinnedColumnSide = {
   Left: 'left',
@@ -24,6 +24,10 @@ export const CONTEXT_MENU_IGNORED_SELECTOR =
 /** Labels of the row menu. Translate them through `localeText`, next to the grid's own keys. */
 export type RowMenuLocaleText = {
   rowMenuHeaderLabel: string;
+  /** Right-click menu only: copies the clicked cell's value. */
+  rowMenuCopyValue: string;
+  /** Right-click menu only: copies every column of the row as `Header: value` lines. */
+  rowMenuCopyRow: string;
   rowMenuPinToTop: string;
   rowMenuPinToBottom: string;
   rowMenuUnpin: string;
@@ -33,6 +37,8 @@ export type RowMenuLocaleText = {
 
 export const ROW_MENU_LOCALE_TEXT: RowMenuLocaleText = {
   rowMenuHeaderLabel: 'Row menu',
+  rowMenuCopyValue: 'Copy value',
+  rowMenuCopyRow: 'Copy row',
   rowMenuPinToTop: 'Pin to top',
   rowMenuPinToBottom: 'Pin to bottom',
   rowMenuUnpin: 'Unpin',
@@ -54,9 +60,20 @@ export const VIEW_MENU_LOCALE_TEXT: ViewMenuLocaleText = {
   viewMenuHeaderBorders: 'Header borders',
 };
 
-/** The view menu's density choices, in order, each with the grid's locale key for its label. */
+/**
+ * The view menu's density choices, in order, each with the grid's locale key for its label and the
+ * grid slot for its icon.
+ */
 export const DENSITY_OPTIONS = [
-  { density: 'compact', labelKey: 'toolbarDensityCompact' },
-  { density: 'standard', labelKey: 'toolbarDensityStandard' },
-  { density: 'comfortable', labelKey: 'toolbarDensityComfortable' },
-] as const satisfies ReadonlyArray<{ density: GridDensity; labelKey: keyof GridLocaleText }>;
+  { density: 'compact', labelKey: 'toolbarDensityCompact', iconSlot: 'densityCompactIcon' },
+  { density: 'standard', labelKey: 'toolbarDensityStandard', iconSlot: 'densityStandardIcon' },
+  {
+    density: 'comfortable',
+    labelKey: 'toolbarDensityComfortable',
+    iconSlot: 'densityComfortableIcon',
+  },
+] as const satisfies ReadonlyArray<{
+  density: GridDensity;
+  labelKey: keyof GridLocaleText;
+  iconSlot: keyof GridSlotsComponent;
+}>;

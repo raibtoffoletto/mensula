@@ -1,6 +1,6 @@
 import usePinningContext from '@hooks/use-pinning-context';
 import { PinnedColumnSide } from '@lib/constants';
-import { PinLeftIcon, PinRightIcon } from '@lib/icons';
+import { PinLeftIcon, PinRightIcon, UnpinIcon } from '@lib/icons';
 import { useGridRootProps, type GridColumnMenuItemProps } from '@mui/x-data-grid';
 import type { MouseEvent, ReactNode } from 'react';
 
@@ -40,7 +40,11 @@ const ColumnMenuPinningItem = ({ colDef, onClick }: GridColumnMenuItemProps) => 
     () => pinColumn(colDef.field, PinnedColumnSide.Right),
     <PinRightIcon fontSize="small" />,
   );
-  const unpin = item(localeText.unpin, () => unpinColumn(colDef.field));
+  const unpin = item(
+    localeText.unpin,
+    () => unpinColumn(colDef.field),
+    <UnpinIcon fontSize="small" />,
+  );
 
   if (side === PinnedColumnSide.Left) {
     return [unpin, pinRight];

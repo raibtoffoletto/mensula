@@ -8,8 +8,14 @@ const RowMenuCell = (params: GridRenderCellParams) => {
 
   return (
     <GridActionsCell {...params}>
-      {items.map(({ label, onClick }) => (
-        <GridActionsCellItem key={label} label={label} showInMenu onClick={onClick} />
+      {items.map(({ label, icon: Icon, onClick }) => (
+        <GridActionsCellItem
+          key={label}
+          label={label}
+          icon={<Icon fontSize="small" />}
+          showInMenu
+          onClick={onClick}
+        />
       ))}
     </GridActionsCell>
   );
