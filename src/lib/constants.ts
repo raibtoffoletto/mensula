@@ -1,3 +1,5 @@
+import type { GridDensity, GridLocaleText } from '@mui/x-data-grid';
+
 export const PinnedColumnSide = {
   Left: 'left',
   Right: 'right',
@@ -37,3 +39,24 @@ export const ROW_MENU_LOCALE_TEXT: RowMenuLocaleText = {
   rowMenuHighlight: 'Highlight',
   rowMenuRemoveHighlight: 'Remove highlight',
 };
+
+/**
+ * Labels of the view menu (right-click the footer or the empty part of the header row). Translate
+ * them through `localeText`; the density items use the grid's own `toolbarDensity*` keys.
+ */
+export type ViewMenuLocaleText = {
+  viewMenuCellBorders: string;
+  viewMenuHeaderBorders: string;
+};
+
+export const VIEW_MENU_LOCALE_TEXT: ViewMenuLocaleText = {
+  viewMenuCellBorders: 'Cell borders',
+  viewMenuHeaderBorders: 'Header borders',
+};
+
+/** The view menu's density choices, in order, each with the grid's locale key for its label. */
+export const DENSITY_OPTIONS = [
+  { density: 'compact', labelKey: 'toolbarDensityCompact' },
+  { density: 'standard', labelKey: 'toolbarDensityStandard' },
+  { density: 'comfortable', labelKey: 'toolbarDensityComfortable' },
+] as const satisfies ReadonlyArray<{ density: GridDensity; labelKey: keyof GridLocaleText }>;

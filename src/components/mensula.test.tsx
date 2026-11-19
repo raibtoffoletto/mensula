@@ -1343,6 +1343,162 @@ describe('Mensula context menu', () => {
   });
 });
 
+describe('Mensula view menu', () => {
+  const people = [
+    { id: 1, name: 'Ada' },
+    { id: 2, name: 'Linus' },
+  ];
+  const nameColumns = [{ field: 'name', headerName: 'Name' }];
+  // The last column draws no right border next to the header filler, so check the first one.
+  const twoColumns = [{ field: 'id', headerName: 'ID' }, ...nameColumns];
+  const idHeader = () => screen.getByRole('columnheader', { name: 'ID' });
+  const idCell = () => document.querySelector('[role="gridcell"][data-field="id"]');
+  const rightClick = (element: Element) =>
+    fireEvent.contextMenu(element, { clientX: 40, clientY: 60 });
+  const headerFiller = () =>
+    document.querySelector('.MuiDataGrid-columnHeaders .MuiDataGrid-filler')!;
+  const footer = () => document.querySelector('.MuiDataGrid-footerContainer')!;
+  const radio = (name: string) => screen.getByRole('menuitemradio', { name });
+  const checkbox = (name: string) => screen.getByRole('menuitemcheckbox', { name });
+
+  it('opens on the empty part of the header row with density and border options', () => {
+    render(<Mensula rows={people} columns={nameColumns} density="compact" />);
+
+    expect(rightClick(headerFiller())).toBe(false);
+
+    expect(screen.getAllByRole('menuitemradio').map((option) => option.textContent)).toEqual([
+      'Compact',
+      'Standard',
+      'Comfortable',
+    ]);
+    expect(radio('Compact')).toHaveAttribute('aria-checked', 'true');
+    expect(radio('Standard')).toHaveAttribute('aria-checked', 'false');
+    expect(screen.getAllByRole('menuitemcheckbox').map((option) => option.textContent)).toEqual([
+      'Cell borders',
+      'Header borders',
+    ]);
+    expect(checkbox('Cell borders')).toHaveAttribute('aria-checked', 'false');
+  });
+
+  it('sets the density from the footer', async () => {
+    const user = userEvent.setup();
+    const onDensityChange = vi.fn();
+    render(<Mensula rows={people} columns={nameColumns} onDensityChange={onDensityChange} />);
+
+    expect(rightClick(footer())).toBe(false);
+    await user.click(radio('Comfortable'));
+
+    // The grid passes its event details as a second argument.
+    expect(onDensityChange.mock.lastCall?.[0]).toBe('comfortable');
+    await waitFor(() => expect(screen.queryByRole('menu')).not.toBeInTheDocument());
+    rightClick(footer());
+    expect(radio('Comfortable')).toHaveAttribute('aria-checked', 'true');
+  });
+
+  it('toggles the vertical borders, starting from initialState', async () => {
+    const user = userEvent.setup();
+    const onShowCellVerticalBorderChange = vi.fn();
+    render(
+      <Mensula
+        rows={people}
+        columns={twoColumns}
+        initialState={{ showColumnVerticalBorder: true }}
+        onShowCellVerticalBorderChange={onShowCellVerticalBorderChange}
+      />,
+    );
+    expect(idHeader()).toHaveClass('MuiDataGrid-columnHeader--withRightBorder');
+    expect(idCell()).not.toHaveClass('MuiDataGrid-cell--withRightBorder');
+
+    rightClick(headerFiller());
+    expect(checkbox('Header borders')).toHaveAttribute('aria-checked', 'true');
+    await user.click(checkbox('Cell borders'));
+
+    expect(onShowCellVerticalBorderChange).toHaveBeenLastCalledWith(true);
+    expect(idCell()).toHaveClass('MuiDataGrid-cell--withRightBorder');
+
+    await waitFor(() => expect(screen.queryByRole('menu')).not.toBeInTheDocument());
+    rightClick(headerFiller());
+    await user.click(checkbox('Header borders'));
+
+    expect(idHeader()).not.toHaveClass('MuiDataGrid-columnHeader--withRightBorder');
+  });
+
+  it('leaves controlled borders to the consumer', async () => {
+    const user = userEvent.setup();
+    const onShowCellVerticalBorderChange = vi.fn();
+    render(
+      <Mensula
+        rows={people}
+        columns={twoColumns}
+        showCellVerticalBorder={false}
+        onShowCellVerticalBorderChange={onShowCellVerticalBorderChange}
+      />,
+    );
+
+    rightClick(footer());
+    await user.click(checkbox('Cell borders'));
+
+    expect(onShowCellVerticalBorderChange).toHaveBeenLastCalledWith(true);
+    expect(idCell()).not.toHaveClass('MuiDataGrid-cell--withRightBorder');
+  });
+
+  it('starts from a border prop without a callback, and follows its later changes', async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(
+      <Mensula rows={people} columns={twoColumns} showCellVerticalBorder />,
+    );
+    expect(idCell()).toHaveClass('MuiDataGrid-cell--withRightBorder');
+
+    rightClick(footer());
+    await user.click(checkbox('Cell borders'));
+    expect(idCell()).not.toHaveClass('MuiDataGrid-cell--withRightBorder');
+
+    rerender(<Mensula rows={people} columns={twoColumns} showCellVerticalBorder={false} />);
+    expect(idCell()).not.toHaveClass('MuiDataGrid-cell--withRightBorder');
+    rerender(<Mensula rows={people} columns={twoColumns} showCellVerticalBorder />);
+    expect(idCell()).toHaveClass('MuiDataGrid-cell--withRightBorder');
+  });
+
+  it('hides the density options with disableDensitySelector, translated', () => {
+    render(
+      <Mensula
+        rows={people}
+        columns={nameColumns}
+        disableDensitySelector
+        localeText={{ viewMenuCellBorders: 'Bordas das células' }}
+      />,
+    );
+
+    rightClick(footer());
+
+    expect(screen.queryByRole('menuitemradio')).not.toBeInTheDocument();
+    expect(checkbox('Bordas das células')).toBeInTheDocument();
+  });
+
+  it('keeps the browser menu on footer controls and with disableContextMenu', () => {
+    const { unmount } = render(
+      <Mensula
+        rows={Array.from({ length: 30 }, (_, id) => ({ id, name: `Person ${id}` }))}
+        columns={nameColumns}
+        pageSizeOptions={[10]}
+        initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
+      />,
+    );
+
+    const nextPage = screen.getByRole('button', { name: /next page/i });
+    expect(nextPage).toBeEnabled();
+    expect(rightClick(nextPage)).toBe(true);
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+    unmount();
+
+    render(<Mensula rows={people} columns={nameColumns} disableContextMenu />);
+
+    expect(rightClick(headerFiller())).toBe(true);
+    expect(rightClick(footer())).toBe(true);
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+  });
+});
+
 describe('Mensula hooks outside a Mensula', () => {
   it.each([
     ['useColumnPinning', useColumnPinning],

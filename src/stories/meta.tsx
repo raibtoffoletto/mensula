@@ -2,6 +2,7 @@ import Mensula, { type MensulaProps } from '@components/mensula';
 import { Box } from '@mui/material';
 import type { GridLoadingOverlayVariant } from '@mui/x-data-grid';
 import type { Decorator, Meta } from '@storybook/react-vite';
+import { useArgs } from 'storybook/preview-api';
 import { columns, rows } from './data';
 
 export type StoryArgs = MensulaProps & {
@@ -84,19 +85,28 @@ export const baseMeta = {
       ],
     },
   },
-  render: ({ loadingVariant, slotProps, ...args }) => (
-    <Box sx={{ height: args.autoHeight ? 'auto' : 520, width: '100%' }}>
-      <Mensula
-        {...args}
-        slotProps={{
-          ...slotProps,
-          loadingOverlay: {
-            variant: loadingVariant,
-            noRowsVariant: loadingVariant,
-            ...slotProps?.loadingOverlay,
-          },
-        }}
-      />
-    </Box>
-  ),
+  render: function Render({ loadingVariant, slotProps, ...args }) {
+    // The view menu's choices write back to the args, which would otherwise hold them controlled.
+    const [, updateArgs] = useArgs<StoryArgs>();
+    return (
+      <Box sx={{ height: args.autoHeight ? 'auto' : 520, width: '100%' }}>
+        <Mensula
+          {...args}
+          onDensityChange={(density) => updateArgs({ density })}
+          onShowCellVerticalBorderChange={(show) => updateArgs({ showCellVerticalBorder: show })}
+          onShowColumnVerticalBorderChange={(show) =>
+            updateArgs({ showColumnVerticalBorder: show })
+          }
+          slotProps={{
+            ...slotProps,
+            loadingOverlay: {
+              variant: loadingVariant,
+              noRowsVariant: loadingVariant,
+              ...slotProps?.loadingOverlay,
+            },
+          }}
+        />
+      </Box>
+    );
+  },
 } satisfies Meta<StoryArgs>;

@@ -5,6 +5,7 @@ import FilterPanel from '@components/filter-panel';
 import PinnedRows from '@components/pinned-rows';
 import RowContextMenu from '@components/row-context-menu';
 import Toolbar from '@components/toolbar';
+import ViewContextMenu from '@components/view-context-menu';
 import useColumnHeaderContextMenu from '@hooks/use-column-header-context-menu';
 import useColumnHeaderReorder from '@hooks/use-column-header-reorder';
 import useColumnOrderState, { type ColumnReorderProps } from '@hooks/use-column-order-state';
@@ -13,11 +14,16 @@ import useMultiFilterProps, { type FilteringProps } from '@hooks/use-multi-filte
 import usePinningState, { type PinningProps } from '@hooks/use-pinning-state';
 import useRowHighlightOnShiftClick from '@hooks/use-row-highlight-on-shift-click';
 import useRowHighlightState, { type RowHighlightProps } from '@hooks/use-row-highlight-state';
+import useVerticalBordersState, {
+  type VerticalBordersProps,
+} from '@hooks/use-vertical-borders-state';
 import type { PinnedRowsProp } from '@contexts/pinning';
 import {
   ROW_HIGHLIGHTED_CLASS,
   ROW_MENU_LOCALE_TEXT,
+  VIEW_MENU_LOCALE_TEXT,
   type RowMenuLocaleText,
+  type ViewMenuLocaleText,
 } from '@lib/constants';
 import { GRID_DETAIL_PANEL_TOGGLE_COL_DEF } from '@lib/detail-panel';
 import { GRID_ROW_MENU_COL_DEF } from '@lib/row-menu';
@@ -44,20 +50,28 @@ export type MensulaInitialState = GridInitialState & {
   pinnedColumns?: GridPinnedColumnFields;
   pinnedRows?: PinnedRowsProp;
   highlightedRowIds?: Set<GridRowId>;
+  showCellVerticalBorder?: boolean;
+  showColumnVerticalBorder?: boolean;
 };
 
 /** The grid's labels plus Mensula's own. */
-export type MensulaLocaleText = GridLocaleText & RowMenuLocaleText;
+export type MensulaLocaleText = GridLocaleText & RowMenuLocaleText & ViewMenuLocaleText;
 
 export type MensulaProps = Omit<
   DataGridProps,
-  'getDetailPanelContent' | 'initialState' | 'onColumnOrderChange' | 'localeText'
+  | 'getDetailPanelContent'
+  | 'initialState'
+  | 'onColumnOrderChange'
+  | 'localeText'
+  | 'showCellVerticalBorder'
+  | 'showColumnVerticalBorder'
 > &
   DetailPanelProps &
   PinningProps &
   ColumnReorderProps &
   FilteringProps &
-  RowHighlightProps & {
+  RowHighlightProps &
+  VerticalBordersProps & {
     initialState?: MensulaInitialState;
     /**
      * Adds a leading column (after the checkbox column) whose menu pins, unpins and highlights
@@ -65,9 +79,11 @@ export type MensulaProps = Omit<
      */
     showRowMenu?: boolean;
     /**
-     * Keeps the browser's context menu on rows and column headers. By default, right-clicking a
-     * row opens its row menu at the pointer (with or without `showRowMenu`) and right-clicking a
-     * column header opens its column menu (whether or not its menu button is showing).
+     * Keeps the browser's context menu on rows, column headers and the footer. By default,
+     * right-clicking a row opens its row menu at the pointer (with or without `showRowMenu`),
+     * right-clicking a column header opens its column menu (whether or not its menu button is
+     * showing), and right-clicking the footer or the empty part of the header row opens the view
+     * menu (density, unless `disableDensitySelector`, and vertical borders).
      */
     disableContextMenu?: boolean;
     /**
@@ -119,6 +135,10 @@ const Mensula = ({
   showRowMenu = false,
   disableContextMenu = false,
   hideColumnMenu = false,
+  showCellVerticalBorder: showCellVerticalBorderProp,
+  onShowCellVerticalBorderChange,
+  showColumnVerticalBorder: showColumnVerticalBorderProp,
+  onShowColumnVerticalBorderChange,
   initialState: initialStateProp,
   ...props
 }: MensulaProps) => {
@@ -127,6 +147,8 @@ const Mensula = ({
     pinnedColumns: initialPinnedColumns,
     pinnedRows: initialPinnedRows,
     highlightedRowIds: initialHighlightedRowIds,
+    showCellVerticalBorder: initialShowCellVerticalBorder,
+    showColumnVerticalBorder: initialShowColumnVerticalBorder,
     ...initialState
   } = initialStateProp ?? {};
   const internalApiRef = useGridApiRef();
@@ -179,6 +201,15 @@ const Mensula = ({
     disableRowHighlightOnShiftClick,
   );
 
+  const verticalBorders = useVerticalBordersState({
+    showCellVerticalBorder: showCellVerticalBorderProp,
+    onShowCellVerticalBorderChange,
+    showColumnVerticalBorder: showColumnVerticalBorderProp,
+    onShowColumnVerticalBorderChange,
+    initialShowCellVerticalBorder,
+    initialShowColumnVerticalBorder,
+  });
+
   const filterProps = useMultiFilterProps({
     apiRef,
     filterModel: props.filterModel,
@@ -205,9 +236,9 @@ const Mensula = ({
 
   useColumnHeaderContextMenu(apiRef, disableContextMenu);
 
-  // The right-click menu renders next to the grid, outside `useRowMenuLocaleText`'s reach.
-  const rowMenuText = useMemo<RowMenuLocaleText>(
-    () => ({ ...ROW_MENU_LOCALE_TEXT, ...props.localeText }),
+  // The right-click menus render next to the grid, outside `useRowMenuLocaleText`'s reach.
+  const menuText = useMemo<RowMenuLocaleText & ViewMenuLocaleText>(
+    () => ({ ...ROW_MENU_LOCALE_TEXT, ...VIEW_MENU_LOCALE_TEXT, ...props.localeText }),
     [props.localeText],
   );
 
@@ -257,11 +288,20 @@ const Mensula = ({
                 columns={columns}
                 slots={slots}
                 sx={sx}
+                showCellVerticalBorder={verticalBorders.showCellVerticalBorder}
+                showColumnVerticalBorder={verticalBorders.showColumnVerticalBorder}
                 getRowClassName={getRowClassName}
                 getRowSpacing={hasDetailPanels ? getRowSpacing : props.getRowSpacing}
               />
             </FilteringProvider>
-            <RowContextMenu apiRef={apiRef} text={rowMenuText} disabled={disableContextMenu} />
+            <RowContextMenu apiRef={apiRef} text={menuText} disabled={disableContextMenu} />
+            <ViewContextMenu
+              {...verticalBorders}
+              apiRef={apiRef}
+              text={menuText}
+              disabled={disableContextMenu}
+              hideDensity={props.disableDensitySelector ?? false}
+            />
           </RowHighlightProvider>
         </DetailPanelProvider>
       </ColumnOrderProvider>

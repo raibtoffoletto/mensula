@@ -111,6 +111,20 @@ Children skip the default layout, so `showQuickFilter`, `quickFilterProps` and `
 <MensulaToolbar sx={{ justifyContent: 'flex-start', gap: 2 }}>…</MensulaToolbar>
 ```
 
+## View menu
+
+Right-clicking the footer (outside its buttons) or the empty part of the header row (past the last column, or an empty column-group cell) opens the view menu. From it, users pick the density and turn the cell and header vertical borders on or off. `disableDensitySelector` removes the density choices, and `disableContextMenu` turns the menu off along with the row and column-header context menus.
+
+Each setting is controlled when you pass its prop and uncontrolled otherwise:
+
+| Setting        | Controlled                                                      | Starting value                          |
+| -------------- | --------------------------------------------------------------- | --------------------------------------- |
+| Density        | `density` + `onDensityChange`                                   | `initialState.density`                  |
+| Cell borders   | `showCellVerticalBorder` + `onShowCellVerticalBorderChange`     | `initialState.showCellVerticalBorder`   |
+| Header borders | `showColumnVerticalBorder` + `onShowColumnVerticalBorderChange` | `initialState.showColumnVerticalBorder` |
+
+A border prop passed without its callback sets where that setting starts: users can still toggle it from the menu, and a new value from the prop overwrites their choice. `initialState` sets the starting value too, but only once. Translate the border labels through `localeText` (`viewMenuCellBorders`, `viewMenuHeaderBorders`); the density labels come from the grid's own `toolbarDensity*` keys.
+
 ## Development
 
 Node 22+ and Yarn 1 (Classic).

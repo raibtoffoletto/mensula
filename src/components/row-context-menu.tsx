@@ -1,8 +1,10 @@
+import ContextMenu from '@components/context-menu';
 import useRowMenuItems from '@hooks/use-row-menu-items';
-import { CONTEXT_MENU_IGNORED_SELECTOR, type RowMenuLocaleText } from '@lib/constants';
-import { Menu, MenuItem } from '@mui/material';
+import type { RowMenuLocaleText } from '@lib/constants';
+import { getMenuAnchor, isOwnContextMenuTarget, type MenuAnchor } from '@lib/context-menu';
+import { MenuItem } from '@mui/material';
 import { gridClasses, type DataGridProps, type GridRowId } from '@mui/x-data-grid';
-import { useEffect, useState, type MouseEvent as ReactMouseEvent } from 'react';
+import { useEffect, useState } from 'react';
 
 type RowContextMenuProps = {
   apiRef: NonNullable<DataGridProps['apiRef']>;
@@ -10,7 +12,7 @@ type RowContextMenuProps = {
   disabled: boolean;
 };
 
-type Anchor = { id: GridRowId; top: number; left: number };
+type Anchor = MenuAnchor & { id: GridRowId };
 
 const ROW_SELECTOR = `.${gridClasses.row}[data-id]`;
 
@@ -21,7 +23,6 @@ const ROW_SELECTOR = `.${gridClasses.row}[data-id]`;
  */
 const RowContextMenu = ({ apiRef, text, disabled }: RowContextMenuProps) => {
   const getItems = useRowMenuItems(text);
-  // The anchor outlives `open` so the items stay put while the menu fades out.
   const [anchor, setAnchor] = useState<Anchor | null>(null);
   const [open, setOpen] = useState(false);
   const close = () => setOpen(false);
@@ -35,12 +36,7 @@ const RowContextMenu = ({ apiRef, text, disabled }: RowContextMenuProps) => {
       const target = event.target as Element;
       const rowElement = target.closest<HTMLElement>(ROW_SELECTOR);
       const api = apiRef.current;
-      if (
-        !api ||
-        !rowElement?.dataset.id ||
-        rowElement.closest(`.${gridClasses.root}`) !== root ||
-        target.closest(CONTEXT_MENU_IGNORED_SELECTOR)
-      ) {
+      if (!api || !rowElement?.dataset.id || !isOwnContextMenuTarget(target, root)) {
         return;
       }
       // `data-id` is a string; the lookup resolves it back to the row's own (maybe numeric) id.
@@ -50,14 +46,7 @@ const RowContextMenu = ({ apiRef, text, disabled }: RowContextMenuProps) => {
       }
       event.preventDefault();
       api.hideColumnMenu();
-      // The context-menu key reports no pointer position: open under the focused cell instead.
-      const fromKeyboard = event.clientX === 0 && event.clientY === 0;
-      const rect = target.getBoundingClientRect();
-      setAnchor({
-        id: api.getRowId(row),
-        top: fromKeyboard ? rect.bottom : event.clientY,
-        left: fromKeyboard ? rect.left : event.clientX,
-      });
+      setAnchor({ ...getMenuAnchor(event), id: api.getRowId(row) });
       setOpen(true);
     };
     root.addEventListener('contextmenu', onContextMenu);
@@ -65,22 +54,7 @@ const RowContextMenu = ({ apiRef, text, disabled }: RowContextMenuProps) => {
   }, [apiRef, disabled]);
 
   return (
-    <Menu
-      open={open && anchor !== null}
-      onClose={close}
-      anchorReference="anchorPosition"
-      anchorPosition={anchor ?? undefined}
-      slotProps={{
-        // Right-clicking the backdrop dismisses the menu rather than stacking the browser's on it.
-        root: {
-          onContextMenu: (event: ReactMouseEvent<HTMLDivElement>) => {
-            event.preventDefault();
-            close();
-          },
-        },
-        transition: { onExited: () => setAnchor(null) },
-      }}
-    >
+    <ContextMenu anchor={anchor} open={open} onClose={close} onExited={() => setAnchor(null)}>
       {anchor &&
         getItems(anchor.id).map(({ label, onClick }) => (
           <MenuItem
@@ -93,7 +67,7 @@ const RowContextMenu = ({ apiRef, text, disabled }: RowContextMenuProps) => {
             {label}
           </MenuItem>
         ))}
-    </Menu>
+    </ContextMenu>
   );
 };
 
